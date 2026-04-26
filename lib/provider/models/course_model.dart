@@ -33,24 +33,24 @@ class CourseModel {
 
   factory CourseModel.fromJson(Map<String, dynamic> json) {
     return CourseModel(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      price: (json['price'] ?? 0).toDouble(),
-      level: json['level'] ?? 'مبتدئ',
-      image: json['image'],
-      status: json['status'] ?? 'مسودة',
-      category: json['category'] ?? 'أخرى',
-      providerId: json['provider_id'] ?? '',
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      level: json['level']?.toString() ?? 'BEGINNER',
+      image: json['image']?.toString(),
+      status: json['status']?.toString() ?? 'DRAFT',
+      category: json['category']?.toString() ?? '',
+      providerId: json['provider_id']?.toString() ?? '',
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
       updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+          ? DateTime.tryParse(json['updated_at'].toString())
           : null,
-      studentsCount: json['students_count'],
-      modulesCount: json['modules_count'],
-      averageRating: json['average_rating']?.toDouble(),
+      studentsCount: json['students_count'] as int?,
+      modulesCount: json['modules_count'] as int?,
+      averageRating: (json['average_rating'] as num?)?.toDouble(),
     );
   }
 
@@ -97,4 +97,35 @@ class CourseModel {
       averageRating: averageRating ?? this.averageRating,
     );
   }
+
+  /// نص الحالة بالعربية
+  String get statusText {
+    switch (status) {
+      case 'PUBLISHED':
+        return 'منشور';
+      case 'ARCHIVED':
+        return 'مؤرشف';
+      case 'DRAFT':
+        return 'مسودة';
+      default:
+        return status;
+    }
+  }
+
+  /// نص المستوى بالعربية
+  String get levelText {
+    switch (level) {
+      case 'BEGINNER':
+        return 'مبتدئ';
+      case 'INTERMEDIATE':
+        return 'متوسط';
+      case 'ADVANCED':
+        return 'متقدم';
+      default:
+        return level;
+    }
+  }
+
+  bool get isPublished => status == 'PUBLISHED';
+  bool get isDraft => status == 'DRAFT';
 }

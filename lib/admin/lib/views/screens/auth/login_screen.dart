@@ -29,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (!mounted) return;
     setState(() => _isSubmitting = true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -37,13 +38,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _passwordController.text.trim(),
     );
 
+    if (!mounted) return;
     setState(() => _isSubmitting = false);
 
-    if (!mounted) return;
-
     if (success) {
+      if (!mounted) return;
       context.go('/dashboard');
     } else {
+      if (!mounted) return;
       _showError(authProvider.errorMessage ?? Constants.msgLoginError);
     }
   }
@@ -154,11 +156,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           keyboardType: TextInputType.emailAddress,
                           textDirection: TextDirection.ltr,
                           textAlign: TextAlign.right,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: 'example@email.com',
-                            prefixIcon: const Icon(Icons.email_outlined,
+                            prefixIcon: Icon(Icons.email_outlined,
                                 color: AppTheme.darkGrayText),
-                            hintStyle: const TextStyle(
+                            hintStyle: TextStyle(
                               fontFamily: 'Cairo',
                               color: AppTheme.darkGrayText,
                               fontSize: 13,

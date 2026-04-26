@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Answer;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../config/app_theme.dart';
 import '../../../config/constants.dart';
 import '../../../models/question_model.dart';
@@ -13,7 +13,8 @@ class QuestionsScreen extends StatefulWidget {
   final String courseId;
   final String examId;
 
-  const QuestionsScreen({super.key, required this.courseId, required this.examId});
+  const QuestionsScreen(
+      {super.key, required this.courseId, required this.examId});
 
   @override
   State<QuestionsScreen> createState() => _QuestionsScreenState();
@@ -43,7 +44,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
           .eq('exam_id', widget.examId)
           .order('order', ascending: true);
       setState(() {
-        _questions = response.map<QuestionModel>((json) => QuestionModel.fromJson(json)).toList();
+        _questions = response
+            .map<QuestionModel>((json) => QuestionModel.fromJson(json))
+            .toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -68,13 +71,15 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
         appBar: const CustomAppBar(title: 'إدارة الأسئلة'),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () async {
-            await context.push('/courses/${widget.courseId}/exams/${widget.examId}/questions/new');
+            await context.push(
+                '/courses/${widget.courseId}/exams/${widget.examId}/questions/new');
             _loadQuestions();
           },
           backgroundColor: AppTheme.primaryDarkBlue,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add),
-          label: const Text('إضافة سؤال', style: TextStyle(fontWeight: FontWeight.bold)),
+          label: const Text('إضافة سؤال',
+              style: TextStyle(fontWeight: FontWeight.bold)),
         ),
         body: _isLoading
             ? const LoadingWidget(message: 'جاري تحميل الأسئلة...')
@@ -83,11 +88,15 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 60, color: AppTheme.redDanger),
+                        const Icon(Icons.error_outline,
+                            size: 60, color: AppTheme.redDanger),
                         const SizedBox(height: 16),
-                        Text(_error!, style: const TextStyle(color: AppTheme.redDanger)),
+                        Text(_error!,
+                            style: const TextStyle(color: AppTheme.redDanger)),
                         const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _loadQuestions, child: const Text('إعادة المحاولة')),
+                        ElevatedButton(
+                            onPressed: _loadQuestions,
+                            child: const Text('إعادة المحاولة')),
                       ],
                     ),
                   )
@@ -98,7 +107,8 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                         icon: Icons.help_outline,
                         buttonText: 'إضافة سؤال جديد',
                         onButtonPressed: () async {
-                          await context.push('/courses/${widget.courseId}/exams/${widget.examId}/questions/new');
+                          await context.push(
+                              '/courses/${widget.courseId}/exams/${widget.examId}/questions/new');
                           _loadQuestions();
                         },
                       )
@@ -137,7 +147,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: Padding(
@@ -157,7 +170,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                   child: Center(
                     child: Text(
                       '${index + 1}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryDarkBlue),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryDarkBlue),
                     ),
                   ),
                 ),
@@ -165,29 +180,40 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                 Expanded(
                   child: Text(
                     question.text,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.primaryDarkBlue),
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primaryDarkBlue),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _getTypeColor(question.type).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(question.type, style: TextStyle(fontSize: 10, color: _getTypeColor(question.type), fontWeight: FontWeight.w600)),
+                  child: Text(question.type,
+                      style: TextStyle(
+                          fontSize: 10,
+                          color: _getTypeColor(question.type),
+                          fontWeight: FontWeight.w600)),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: const Icon(Icons.edit_outlined, size: 20, color: AppTheme.primaryDarkBlue),
+                  icon: const Icon(Icons.edit_outlined,
+                      size: 20, color: AppTheme.primaryDarkBlue),
                   onPressed: () async {
-                    await context.push('/courses/${widget.courseId}/exams/${widget.examId}/questions/${question.id}/edit');
+                    await context.push(
+                        '/courses/${widget.courseId}/exams/${widget.examId}/questions/${question.id}/edit');
                     _loadQuestions();
                   },
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20, color: AppTheme.redDanger),
+                  icon: const Icon(Icons.delete_outline,
+                      size: 20, color: AppTheme.redDanger),
                   onPressed: () async {
                     final confirm = await ConfirmationDialog.show(
                       context,
@@ -200,7 +226,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                       await _deleteQuestion(question.id);
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('تم حذف السؤال'), backgroundColor: AppTheme.greenSuccess),
+                          const SnackBar(
+                              content: Text('تم حذف السؤال'),
+                              backgroundColor: AppTheme.greenSuccess),
                         );
                       }
                     }
@@ -218,9 +246,13 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                   child: Row(
                     children: [
                       Icon(
-                        answer.isCorrect ? Icons.check_circle : Icons.radio_button_unchecked,
+                        answer.isCorrect
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
                         size: 18,
-                        color: answer.isCorrect ? AppTheme.greenSuccess : AppTheme.darkGrayText,
+                        color: answer.isCorrect
+                            ? AppTheme.greenSuccess
+                            : AppTheme.darkGrayText,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -228,8 +260,12 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                           answer.text,
                           style: TextStyle(
                             fontSize: 13,
-                            color: answer.isCorrect ? AppTheme.greenSuccess : AppTheme.darkGrayText,
-                            fontWeight: answer.isCorrect ? FontWeight.w600 : FontWeight.normal,
+                            color: answer.isCorrect
+                                ? AppTheme.greenSuccess
+                                : AppTheme.darkGrayText,
+                            fontWeight: answer.isCorrect
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -243,7 +279,8 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
             const SizedBox(height: 4),
             Text(
               '${question.points} نقطة',
-              style: const TextStyle(fontSize: 11, color: AppTheme.darkGrayText),
+              style:
+                  const TextStyle(fontSize: 11, color: AppTheme.darkGrayText),
             ),
           ],
         ),

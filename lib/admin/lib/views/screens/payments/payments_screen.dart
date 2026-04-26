@@ -86,7 +86,7 @@ class _PaymentsScreenState extends State<PaymentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.lightGrayBg,
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         title: Constants.titlePayments,
         showBack: false,
         backgroundColor: AppTheme.primaryDarkBlue,

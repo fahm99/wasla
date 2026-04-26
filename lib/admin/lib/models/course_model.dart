@@ -45,7 +45,9 @@ class CourseModel {
       providerId: json['provider_id']?.toString() ?? '',
       providerName: json['provider_name']?.toString(),
       providerAvatar: json['provider_avatar']?.toString(),
-      thumbnailUrl: json['thumbnail_url']?.toString(),
+      thumbnailUrl: json['image']?.toString() ??
+          json['thumbnail_url']?.toString() ??
+          json['thumbnail']?.toString(),
       price: (json['price'] as num?)?.toDouble(),
       level: json['level']?.toString() ?? 'مبتدئ',
       category: json['category']?.toString() ?? 'عام',

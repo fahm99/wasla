@@ -1,16 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
+import 'package:wasla_provider/shared/services/unified_auth_service.dart';
+import 'package:wasla_provider/shared/utils/auth_error_handler.dart'
+    hide AuthException;
 import '../models/user_model.dart';
-import '../services/supabase_service.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthProvider with ChangeNotifier {
-  final SupabaseService _supabaseService;
+  final UnifiedAuthService _authService;
   AuthStatus _status = AuthStatus.unknown;
   UserModel? _user;
   String? _errorMessage;
+  late final StreamSubscription<AuthState> _authSubscription;
 
-  AuthProvider(this._supabaseService) {
+  AuthProvider(SupabaseClient supabaseClient)
+      : _authService = UnifiedAuthService(supabaseClient) {
+    _authSubscription = _authService.authStateChanges.listen((_) {
+      checkAuth();
+    });
     checkAuth();
   }
 
@@ -20,16 +30,25 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.unknown;
 
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
+
   Future<void> checkAuth() async {
     try {
-      final user = await _supabaseService.getCurrentUser();
-      if (user != null && user.role == 'ADMIN') {
-        _user = user;
+      final result = await _authService.getCurrentUser(requiredRole: AuthRoles.admin);
+      if (result != null) {
+        final profile = result['profile'];
+        _user = UserModel.fromJson(profile);
         _status = AuthStatus.authenticated;
       } else {
+        _user = null;
         _status = AuthStatus.unauthenticated;
       }
-    } catch (e) {
+    } catch (_) {
+      _user = null;
       _status = AuthStatus.unauthenticated;
     }
     notifyListeners();
@@ -41,26 +60,20 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final user = await _supabaseService.signIn(email, password);
-      if (user == null) {
-        _errorMessage = 'فشل تسجيل الدخول. تحقق من البيانات.';
-        _status = AuthStatus.unauthenticated;
-        notifyListeners();
-        return false;
-      }
-      if (user.role != 'ADMIN') {
-        await _supabaseService.signOut();
-        _errorMessage = 'هذا الحساب ليس حساب مشرف. الوصول مرفوض.';
-        _status = AuthStatus.unauthenticated;
-        notifyListeners();
-        return false;
-      }
-      _user = user;
+      final result = await _authService.signIn(
+        email: email,
+        password: password,
+        requiredRole: AuthRoles.admin,
+      );
+
+      final profile = result['profile'];
+      _user = UserModel.fromJson(profile);
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = _parseError(e);
+      _errorMessage = AuthErrorHandler.parse(e).message;
+      _user = null;
       _status = AuthStatus.unauthenticated;
       notifyListeners();
       return false;
@@ -69,22 +82,22 @@ class AuthProvider with ChangeNotifier {
 
   Future<void> logout() async {
     try {
-      await _supabaseService.signOut();
+      await _authService.signOut();
       _user = null;
       _status = AuthStatus.unauthenticated;
       notifyListeners();
     } catch (e) {
-      _errorMessage = _parseError(e);
+      _errorMessage = AuthErrorHandler.parse(e).message;
       notifyListeners();
     }
   }
 
   Future<bool> updatePassword(String newPassword) async {
     try {
-      await _supabaseService.updatePassword(newPassword);
+      await _authService.updatePassword(newPassword);
       return true;
     } catch (e) {
-      _errorMessage = _parseError(e);
+      _errorMessage = AuthErrorHandler.parse(e).message;
       notifyListeners();
       return false;
     }
@@ -93,21 +106,5 @@ class AuthProvider with ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
-  }
-
-  String _parseError(dynamic error) {
-    if (error.toString().contains('Invalid login credentials')) {
-      return 'بيانات الدخول غير صحيحة';
-    }
-    if (error.toString().contains('Too many requests')) {
-      return 'محاولات كثيرة. حاول بعد قليل';
-    }
-    if (error.toString().contains('Email not confirmed')) {
-      return 'البريد الإلكتروني غير مؤكد';
-    }
-    if (error.toString().contains('Network')) {
-      return 'لا يوجد اتصال بالإنترنت';
-    }
-    return 'حدث خطأ غير متوقع';
   }
 }

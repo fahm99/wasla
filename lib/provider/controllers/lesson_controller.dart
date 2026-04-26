@@ -12,7 +12,7 @@ class LessonController {
     dynamic file,
     String? fileName,
     int? fileSize,
-    String? duration,
+    int? duration,
   }) {
     if (title.trim().isEmpty) {
       _provider.setError('عنوان الدرس مطلوب');

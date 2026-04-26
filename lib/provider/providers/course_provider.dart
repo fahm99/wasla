@@ -157,12 +157,12 @@ class CourseProvider with ChangeNotifier {
       final index = _courses.indexWhere((c) => c.id == courseId);
       if (index != -1) {
         _courses[index] = _courses[index].copyWith(
-          status: publish ? 'منشور' : 'مسودة',
+          status: publish ? 'PUBLISHED' : 'DRAFT',
         );
       }
       if (_currentCourse?.id == courseId) {
         _currentCourse = _currentCourse!.copyWith(
-          status: publish ? 'منشور' : 'مسودة',
+          status: publish ? 'PUBLISHED' : 'DRAFT',
         );
       }
       _isLoading = false;

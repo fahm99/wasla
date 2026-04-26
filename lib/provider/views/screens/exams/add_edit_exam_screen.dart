@@ -40,7 +40,7 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
       _titleController.text = exam.title;
       _descriptionController.text = exam.description;
       _passingScoreController.text = exam.passingScore.toString();
-      _durationController.text = exam.duration ?? '';
+      _durationController.text = exam.duration.toString();
     }
   }
 
@@ -66,7 +66,9 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         passingScore: int.parse(_passingScoreController.text.trim()),
-        duration: _durationController.text.trim().isNotEmpty ? _durationController.text.trim() : null,
+        duration: _durationController.text.trim().isNotEmpty
+            ? int.tryParse(_durationController.text.trim())
+            : null,
       );
     } else {
       final exam = await provider.createExam(
@@ -74,7 +76,7 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
         description: _descriptionController.text.trim(),
         passingScore: int.parse(_passingScoreController.text.trim()),
         courseId: widget.courseId,
-        duration: _durationController.text.trim().isNotEmpty ? _durationController.text.trim() : null,
+        duration: int.tryParse(_durationController.text.trim()) ?? 30,
       );
       success = exam != null;
     }
@@ -92,7 +94,9 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
       context.pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.error ?? 'حدث خطأ'), backgroundColor: AppTheme.redDanger),
+        SnackBar(
+            content: Text(provider.error ?? 'حدث خطأ'),
+            backgroundColor: AppTheme.redDanger),
       );
     }
   }
@@ -102,7 +106,8 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: CustomAppBar(title: _isEditing ? 'تعديل الامتحان' : 'إضافة امتحان جديد'),
+        appBar: CustomAppBar(
+            title: _isEditing ? 'تعديل الامتحان' : 'إضافة امتحان جديد'),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Form(
@@ -112,14 +117,21 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
               children: [
                 TextFormField(
                   controller: _titleController,
-                  decoration: const InputDecoration(labelText: 'عنوان الامتحان', prefixIcon: Icon(Icons.quiz_outlined)),
-                  validator: (value) => value == null || value.trim().isEmpty ? 'عنوان الامتحان مطلوب' : null,
+                  decoration: const InputDecoration(
+                      labelText: 'عنوان الامتحان',
+                      prefixIcon: Icon(Icons.quiz_outlined)),
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? 'عنوان الامتحان مطلوب'
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _descriptionController,
                   maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'وصف الامتحان', prefixIcon: Icon(Icons.description_outlined), alignLabelWithHint: true),
+                  decoration: const InputDecoration(
+                      labelText: 'وصف الامتحان',
+                      prefixIcon: Icon(Icons.description_outlined),
+                      alignLabelWithHint: true),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -130,11 +142,18 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
                         keyboardType: TextInputType.number,
                         textDirection: TextDirection.ltr,
                         textAlign: TextAlign.center,
-                        decoration: const InputDecoration(labelText: 'درجة النجاح (%)', hintText: '60', hintTextDirection: TextDirection.ltr),
+                        decoration: const InputDecoration(
+                            labelText: 'درجة النجاح (%)',
+                            hintText: '60',
+                            hintTextDirection: TextDirection.ltr),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'درجة النجاح مطلوبة';
+                          if (value == null || value.trim().isEmpty) {
+                            return 'درجة النجاح مطلوبة';
+                          }
                           final score = int.tryParse(value.trim());
-                          if (score == null || score < 0 || score > 100) return 'القيمة يجب أن تكون بين 0 و 100';
+                          if (score == null || score < 0 || score > 100) {
+                            return 'القيمة يجب أن تكون بين 0 و 100';
+                          }
                           return null;
                         },
                       ),
@@ -146,7 +165,10 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
                         keyboardType: TextInputType.number,
                         textDirection: TextDirection.ltr,
                         textAlign: TextAlign.center,
-                        decoration: const InputDecoration(labelText: 'المدة (دقائق)', hintText: '30', hintTextDirection: TextDirection.ltr),
+                        decoration: const InputDecoration(
+                            labelText: 'المدة (دقائق)',
+                            hintText: '30',
+                            hintTextDirection: TextDirection.ltr),
                       ),
                     ),
                   ],
@@ -160,11 +182,18 @@ class _AddEditExamScreenState extends State<AddEditExamScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryDarkBlue,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                     ),
                     child: _isSubmitting
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text(_isEditing ? 'حفظ التعديلات' : 'إنشاء الامتحان', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
+                        : Text(_isEditing ? 'حفظ التعديلات' : 'إنشاء الامتحان',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

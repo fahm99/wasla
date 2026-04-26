@@ -90,7 +90,7 @@ class LessonItem extends StatelessWidget {
                       ),
                       if (lesson.duration > 0) ...[
                         const SizedBox(width: 8),
-                        Icon(Icons.schedule, size: 11, color: AppTheme.greyText),
+                        const Icon(Icons.schedule, size: 11, color: AppTheme.greyText),
                         const SizedBox(width: 2),
                         Text(
                           lesson.formattedDuration,
@@ -124,7 +124,7 @@ class LessonItem extends StatelessWidget {
                 ),
               ),
             const SizedBox(width: 4),
-            Icon(
+            const Icon(
               Icons.chevron_left,
               color: AppTheme.greyText,
               size: 20,

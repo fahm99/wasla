@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart' hide FilterChip;
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/app_theme.dart';
 import '../../../providers/course_provider.dart';
 import '../../../widgets/course_card.dart';

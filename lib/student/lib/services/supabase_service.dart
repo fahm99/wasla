@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../models/user_model.dart';
 import '../models/course_model.dart';
 import '../models/module_model.dart';
@@ -29,7 +29,9 @@ class SupabaseService {
       password: password,
       data: {
         'name': name,
-        'role': 'student',
+        'role': 'STUDENT',
+        'phone': phone ?? '',
+        'gender': gender ?? '',
       },
     );
 
@@ -37,24 +39,16 @@ class SupabaseService {
       throw Exception('فشل إنشاء الحساب');
     }
 
-    await _client.from('profiles').insert({
-      'id': authResponse.user!.id,
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'gender': gender,
-      'role': 'student',
-      'status': 'active',
-    });
-
+    // The handle_new_user trigger creates the profile automatically.
+    // We return a local model; the real profile will be fetched on next login.
     return UserModel(
       id: authResponse.user!.id,
       name: name,
       email: email,
       phone: phone,
       gender: gender,
-      role: 'student',
-      status: 'active',
+      role: 'STUDENT',
+      status: 'PENDING',
     );
   }
 
@@ -77,7 +71,8 @@ class SupabaseService {
         .eq('id', authResponse.user!.id)
         .single();
 
-    return UserModel.fromJson(profile);
+    return UserModel.fromJson(
+        {...profile, 'email': authResponse.user!.email ?? email});
   }
 
   static Future<void> signOut() async {
@@ -97,7 +92,7 @@ class SupabaseService {
         id: user.id,
         name: user.userMetadata?['name'] ?? '',
         email: user.email ?? '',
-        role: 'student',
+        role: 'STUDENT',
       );
     }
   }
@@ -121,7 +116,7 @@ class SupabaseService {
     dynamic query = _client
         .from('courses')
         .select('*, provider:profiles!courses_provider_id_fkey(name, avatar)')
-        .eq('status', 'published');
+        .eq('status', 'PUBLISHED');
 
     if (search != null && search.isNotEmpty) {
       query = query.or(
@@ -281,7 +276,6 @@ class SupabaseService {
     await _client.rpc('complete_lesson', params: {
       'p_student_id': userId,
       'p_lesson_id': lessonId,
-      'p_watch_progress': watchProgress,
     });
   }
 
@@ -399,8 +393,6 @@ class SupabaseService {
         .select('*, questions(*, answers(*))')
         .eq('course_id', courseId);
 
-    final userId = _client.auth.currentUser?.id;
-
     return (response as List).map((e) {
       final exam = Map<String, dynamic>.from(e as Map);
       if (exam['questions'] != null) {
@@ -411,12 +403,12 @@ class SupabaseService {
                 .map((a) =>
                     AnswerModel.fromJson(Map<String, dynamic>.from(a as Map)))
                 .toList();
-            answers.sort((a, b) => a.id!.compareTo(b.id!));
+            answers.sort((a, b) => a.id.compareTo(b.id));
             question['answers'] = answers;
           }
           return QuestionModel.fromJson(question);
         }).toList();
-        questions.sort((a, b) => a.order!.compareTo(b.order!));
+        questions.sort((a, b) => a.order.compareTo(b.order));
         exam['questions'] = questions;
       }
       return ExamModel.fromJson(exam);
@@ -440,12 +432,12 @@ class SupabaseService {
               .map((a) =>
                   AnswerModel.fromJson(Map<String, dynamic>.from(a as Map)))
               .toList();
-          answers.sort((a, b) => a.id!.compareTo(b.id!));
+          answers.sort((a, b) => a.id.compareTo(b.id));
           question['answers'] = answers;
         }
         return QuestionModel.fromJson(question);
       }).toList();
-      questions.sort((a, b) => a.order!.compareTo(b.order!));
+      questions.sort((a, b) => a.order.compareTo(b.order));
       exam['questions'] = questions;
     }
 
@@ -475,7 +467,7 @@ class SupabaseService {
     final response = await _client.rpc('submit_exam_attempt', params: {
       'p_student_id': userId,
       'p_exam_id': examId,
-      'p_student_answers': studentAnswers,
+      'p_answers': studentAnswers,
       'p_time_spent': timeSpent,
     });
 
@@ -741,7 +733,7 @@ class SupabaseService {
     final response = await _client
         .from('courses')
         .select('category')
-        .eq('status', 'published')
+        .eq('status', 'PUBLISHED')
         .not('category', 'is', null);
 
     final categories =

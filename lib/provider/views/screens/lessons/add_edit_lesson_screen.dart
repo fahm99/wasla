@@ -35,7 +35,6 @@ class _AddEditLessonScreenState extends State<AddEditLessonScreen> {
   int _fileSize = 0;
   String _lessonType = AppConstants.lessonTypeVideo;
   bool _isSubmitting = false;
-  final double _uploadProgress = 0;
 
   bool get _isEditing => widget.lessonId != null;
 
@@ -56,7 +55,7 @@ class _AddEditLessonScreenState extends State<AddEditLessonScreen> {
       _lessonType = lesson.type;
       _fileName = lesson.fileName ?? '';
       _fileSize = lesson.fileSize ?? 0;
-      _durationController.text = lesson.duration ?? '';
+      _durationController.text = lesson.duration?.toString() ?? '';
     }
   }
 
@@ -159,7 +158,7 @@ class _AddEditLessonScreenState extends State<AddEditLessonScreen> {
         fileName: _fileName.isNotEmpty ? _fileName : null,
         fileSize: _fileSize > 0 ? _fileSize : null,
         duration: _durationController.text.trim().isNotEmpty
-            ? _durationController.text.trim()
+            ? int.tryParse(_durationController.text.trim())
             : null,
       );
     } else {
@@ -172,7 +171,7 @@ class _AddEditLessonScreenState extends State<AddEditLessonScreen> {
         fileName: _fileName.isNotEmpty ? _fileName : null,
         fileSize: _fileSize > 0 ? _fileSize : null,
         duration: _durationController.text.trim().isNotEmpty
-            ? _durationController.text.trim()
+            ? int.tryParse(_durationController.text.trim())
             : null,
       );
       success = lesson != null;

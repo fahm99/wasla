@@ -421,16 +421,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: course.status == 'منشور'
+                        color: course.isPublished
                             ? AppTheme.greenSuccess.withOpacity(0.1)
                             : AppTheme.yellowAccent.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        course.status ?? 'مسودة',
+                        course.statusText,
                         style: TextStyle(
                           fontSize: 11,
-                          color: course.status == 'منشور'
+                          color: course.isPublished
                               ? AppTheme.greenSuccess
                               : Colors.orange,
                           fontWeight: FontWeight.w600,

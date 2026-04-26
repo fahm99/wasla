@@ -6,7 +6,8 @@ class LessonModel {
   final String? fileUrl;
   final String? fileName;
   final int? fileSize;
-  final String? duration;
+  final int? duration; // duration in seconds (INTEGER in DB)
+  final bool isFree;
   final int order;
   final String moduleId;
   final DateTime? createdAt;
@@ -20,6 +21,7 @@ class LessonModel {
     this.fileName,
     this.fileSize,
     this.duration,
+    this.isFree = false,
     required this.order,
     required this.moduleId,
     this.createdAt,
@@ -27,18 +29,19 @@ class LessonModel {
 
   factory LessonModel.fromJson(Map<String, dynamic> json) {
     return LessonModel(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      type: json['type'] ?? 'فيديو',
-      content: json['content'],
-      fileUrl: json['file_url'],
-      fileName: json['file_name'],
-      fileSize: json['file_size'],
-      duration: json['duration'],
-      order: json['order'] ?? 0,
-      moduleId: json['module_id'] ?? '',
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      type: json['type']?.toString() ?? 'TEXT',
+      content: json['content']?.toString(),
+      fileUrl: json['file_url']?.toString(),
+      fileName: json['file_name']?.toString(),
+      fileSize: (json['file_size'] as num?)?.toInt(),
+      duration: (json['duration'] as num?)?.toInt(),
+      isFree: json['is_free'] as bool? ?? false,
+      order: (json['order'] as int?) ?? 0,
+      moduleId: json['module_id']?.toString() ?? '',
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
     );
   }
@@ -53,6 +56,7 @@ class LessonModel {
       'file_name': fileName,
       'file_size': fileSize,
       'duration': duration,
+      'is_free': isFree,
       'order': order,
       'module_id': moduleId,
     };
@@ -65,7 +69,8 @@ class LessonModel {
     String? fileUrl,
     String? fileName,
     int? fileSize,
-    String? duration,
+    int? duration,
+    bool? isFree,
     int? order,
   }) {
     return LessonModel(
@@ -77,16 +82,39 @@ class LessonModel {
       fileName: fileName ?? this.fileName,
       fileSize: fileSize ?? this.fileSize,
       duration: duration ?? this.duration,
+      isFree: isFree ?? this.isFree,
       order: order ?? this.order,
       moduleId: moduleId,
       createdAt: createdAt,
     );
   }
 
+  /// نص نوع الدرس بالعربية
+  String get typeText {
+    switch (type) {
+      case 'VIDEO':
+        return 'فيديو';
+      case 'PDF':
+        return 'PDF';
+      case 'TEXT':
+        return 'نص';
+      case 'FILE':
+        return 'ملف';
+      case 'IMAGE':
+        return 'صورة';
+      case 'AUDIO':
+        return 'صوتي';
+      default:
+        return type;
+    }
+  }
+
   String get formattedFileSize {
     if (fileSize == null) return '';
     if (fileSize! < 1024) return '$fileSize بايت';
-    if (fileSize! < 1024 * 1024) return '${(fileSize! / 1024).toStringAsFixed(1)} كيلوبايت';
+    if (fileSize! < 1024 * 1024) {
+      return '${(fileSize! / 1024).toStringAsFixed(1)} كيلوبايت';
+    }
     if (fileSize! < 1024 * 1024 * 1024) {
       return '${(fileSize! / (1024 * 1024)).toStringAsFixed(1)} ميجابايت';
     }

@@ -110,7 +110,7 @@ class CourseCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.schedule, size: 14, color: AppTheme.greyText),
+                      const Icon(Icons.schedule, size: 14, color: AppTheme.greyText),
                       const SizedBox(width: 4),
                       Text(
                         course.formattedDuration,
@@ -121,7 +121,7 @@ class CourseCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Icon(Icons.signal_cellular_alt, size: 14, color: AppTheme.greyText),
+                      const Icon(Icons.signal_cellular_alt, size: 14, color: AppTheme.greyText),
                       const SizedBox(width: 4),
                       Text(
                         course.level,

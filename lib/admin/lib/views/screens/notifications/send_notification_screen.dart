@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import '../../../config/app_theme.dart';
 import '../../../config/constants.dart';
 import '../../../providers/notifications_provider.dart';
@@ -53,9 +52,9 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
+          content: const Text(
             Constants.msgSendSuccess,
-            style: const TextStyle(fontFamily: 'Cairo'),
+            style: TextStyle(fontFamily: 'Cairo'),
           ),
           backgroundColor: AppTheme.greenSuccess,
           behavior: SnackBarBehavior.floating,
@@ -87,7 +86,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppTheme.lightGrayBg,
-        appBar: CustomAppBar(
+        appBar: const CustomAppBar(
           title: Constants.titleSendNotification,
           showBack: true,
           backgroundColor: AppTheme.primaryDarkBlue,
@@ -113,9 +112,9 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _titleController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'أدخل عنوان الإشعار',
-                    prefixIcon: const Icon(Icons.title,
+                    prefixIcon: Icon(Icons.title,
                         color: AppTheme.darkGrayText),
                   ),
                   validator: (value) {
@@ -140,10 +139,10 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                 TextFormField(
                   controller: _messageController,
                   maxLines: 5,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'أدخل نص الإشعار',
                     alignLabelWithHint: true,
-                    prefixIcon: const Padding(
+                    prefixIcon: Padding(
                       padding: EdgeInsets.only(bottom: 60),
                       child: Icon(Icons.message,
                           color: AppTheme.darkGrayText),
@@ -222,12 +221,12 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      const Row(
                         children: [
-                          const Icon(Icons.preview,
+                          Icon(Icons.preview,
                               color: AppTheme.primaryDarkBlue, size: 18),
-                          const SizedBox(width: 8),
-                          const Text(
+                          SizedBox(width: 8),
+                          Text(
                             'معاينة الإشعار',
                             style: TextStyle(
                               fontFamily: 'Cairo',

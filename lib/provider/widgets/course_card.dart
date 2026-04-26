@@ -66,7 +66,8 @@ class CourseCard extends StatelessWidget {
                                 ),
                               ),
                               errorWidget: (context, url, error) => Container(
-                                color: AppTheme.primaryDarkBlue.withOpacity(0.1),
+                                color:
+                                    AppTheme.primaryDarkBlue.withOpacity(0.1),
                                 child: const Icon(
                                   Icons.school,
                                   size: 60,
@@ -101,7 +102,9 @@ class CourseCard extends StatelessWidget {
                         child: Text(
                           isPublished ? 'منشور' : 'مسودة',
                           style: TextStyle(
-                            color: isPublished ? Colors.white : AppTheme.primaryDarkBlue,
+                            color: isPublished
+                                ? Colors.white
+                                : AppTheme.primaryDarkBlue,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -164,7 +167,7 @@ class CourseCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            course.level,
+                            course.levelText,
                             style: const TextStyle(
                               fontSize: 11,
                               color: AppTheme.primaryDarkBlue,
@@ -214,12 +217,14 @@ class CourseCard extends StatelessWidget {
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: onEdit ??
-                                () => context.push('/courses/${course.id}/edit'),
+                                () =>
+                                    context.push('/courses/${course.id}/edit'),
                             icon: const Icon(Icons.edit, size: 18),
                             label: const Text('تعديل'),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppTheme.primaryDarkBlue,
-                              side: const BorderSide(color: AppTheme.primaryDarkBlue),
+                              side: const BorderSide(
+                                  color: AppTheme.primaryDarkBlue),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -235,9 +240,7 @@ class CourseCard extends StatelessWidget {
                                   // Toggle publish state
                                 },
                             icon: Icon(
-                              isPublished
-                                  ? Icons.unpublished
-                                  : Icons.publish,
+                              isPublished ? Icons.unpublished : Icons.publish,
                               size: 18,
                             ),
                             label: Text(isPublished ? 'إلغاء النشر' : 'نشر'),

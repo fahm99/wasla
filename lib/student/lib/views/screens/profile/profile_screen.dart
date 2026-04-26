@@ -3,12 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../config/app_theme.dart';
-import '../../../config/constants.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../services/supabase_service.dart';
-import '../../../widgets/custom_app_bar.dart';
 import '../../../widgets/custom_bottom_nav.dart';
-import '../../../widgets/loading_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -325,7 +322,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            Icon(
+            const Icon(
               Icons.chevron_left,
               color: AppTheme.greyText,
               size: 20,

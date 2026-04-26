@@ -3,10 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../config/app_theme.dart';
-import '../../../config/constants.dart';
 import '../../../providers/course_provider.dart';
 import '../../../providers/enrollment_provider.dart';
-import '../../../providers/auth_provider.dart';
 import '../../../widgets/custom_app_bar.dart';
 import '../../../widgets/rating_stars.dart';
 import '../../../widgets/loading_widget.dart';
@@ -57,10 +55,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
     final course = courseProvider.currentCourse;
 
     if (courseProvider.isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppTheme.lightBg,
-        appBar: const CustomAppBar(title: '', showBack: true),
-        body: const LoadingWidget(message: 'جاري تحميل الدورة...'),
+        appBar: CustomAppBar(title: '', showBack: true),
+        body: LoadingWidget(message: 'جاري تحميل الدورة...'),
       );
     }
 
@@ -119,9 +117,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppTheme.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,8 +388,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
+            const Padding(
+              padding: EdgeInsets.only(top: 2),
               child: Icon(Icons.check_circle, size: 16, color: AppTheme.successGreen),
             ),
             const SizedBox(width: 8),

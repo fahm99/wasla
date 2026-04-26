@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
@@ -9,25 +11,37 @@ class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _isAuthenticated = false;
+  bool _requiresEmailConfirmation = false;
+  String? _pendingEmail;
+  late final StreamSubscription _authSubscription;
 
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _isAuthenticated;
+  bool get requiresEmailConfirmation => _requiresEmailConfirmation;
+  String? get pendingEmail => _pendingEmail;
 
   AuthProvider() {
+    _authSubscription = _authService.authStateChanges.listen((_) {
+      _checkAuth();
+    });
     _checkAuth();
   }
 
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
+
   Future<void> _checkAuth() async {
-    final currentUser = _authService.getCurrentUser();
-    if (currentUser != null) {
-      try {
-        _user = await _authService.getUserProfile(currentUser.id);
-        _isAuthenticated = true;
-      } catch (e) {
-        _isAuthenticated = false;
-      }
+    final currentUser = await _authService.getCurrentUserProfile();
+    _user = currentUser;
+    _isAuthenticated = currentUser != null;
+    if (_isAuthenticated) {
+      _requiresEmailConfirmation = false;
+      _pendingEmail = null;
     }
     notifyListeners();
   }
@@ -45,7 +59,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _user = await _authService.signUp(
+      final result = await _authService.signUp(
         email: email,
         password: password,
         name: name,
@@ -53,7 +67,10 @@ class AuthProvider with ChangeNotifier {
         institutionType: institutionType,
         institutionName: institutionName,
       );
-      _isAuthenticated = true;
+      _user = null;
+      _isAuthenticated = false;
+      _pendingEmail = (result['email'] ?? email).toString();
+      _requiresEmailConfirmation = result['requires_email_confirmation'] == true;
       _isLoading = false;
       notifyListeners();
       return true;
@@ -79,6 +96,8 @@ class AuthProvider with ChangeNotifier {
         password: password,
       );
       _isAuthenticated = true;
+      _requiresEmailConfirmation = false;
+      _pendingEmail = null;
       _isLoading = false;
       notifyListeners();
       return true;
@@ -94,7 +113,29 @@ class AuthProvider with ChangeNotifier {
     await _authService.signOut();
     _user = null;
     _isAuthenticated = false;
+    _requiresEmailConfirmation = false;
+    _pendingEmail = null;
     notifyListeners();
+  }
+
+  Future<bool> resendConfirmationEmail() async {
+    if (_pendingEmail == null || _pendingEmail!.isEmpty) return false;
+
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _authService.resendConfirmationEmail(_pendingEmail!);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   Future<bool> updateProfile({

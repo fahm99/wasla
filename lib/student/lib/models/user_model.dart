@@ -1,5 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 class UserModel {
   final String id;
   final String name;
@@ -18,8 +16,8 @@ class UserModel {
     required this.email,
     this.phone,
     this.avatar,
-    this.role = 'student',
-    this.status = 'active',
+    this.role = 'STUDENT',
+    this.status = 'PENDING',
     this.bio,
     this.gender,
     this.createdAt,
@@ -32,8 +30,8 @@ class UserModel {
       email: json['email'] ?? '',
       phone: json['phone'],
       avatar: json['avatar'],
-      role: json['role'] ?? 'student',
-      status: json['status'] ?? 'active',
+      role: json['role'] ?? 'STUDENT',
+      status: json['status'] ?? 'PENDING',
       bio: json['bio'],
       gender: json['gender'],
       createdAt: json['created_at'] != null

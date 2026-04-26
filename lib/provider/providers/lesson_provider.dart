@@ -43,7 +43,7 @@ class LessonProvider with ChangeNotifier {
     File? file,
     String? fileName,
     int? fileSize,
-    String? duration,
+    int? duration,
   }) async {
     _isLoading = true;
     _error = null;
@@ -84,7 +84,7 @@ class LessonProvider with ChangeNotifier {
     File? file,
     String? fileName,
     int? fileSize,
-    String? duration,
+    int? duration,
     int? order,
   }) async {
     _isLoading = true;

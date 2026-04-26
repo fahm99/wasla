@@ -6,7 +6,7 @@ class CourseProvider with ChangeNotifier {
   List<CourseModel> _courses = [];
   CourseModel? _currentCourse;
   bool _isLoading = false;
-  bool _isLoadingMore = false;
+  final bool _isLoadingMore = false;
   String? _error;
   int _currentPage = 1;
   bool _hasMore = true;

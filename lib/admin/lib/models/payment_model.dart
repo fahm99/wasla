@@ -32,16 +32,19 @@ class PaymentModel {
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
       id: json['id']?.toString() ?? '',
-      userId: json['user_id']?.toString() ?? '',
-      userName: json['user_name']?.toString() ?? json['provider_name']?.toString(),
-      userAvatar: json['user_avatar']?.toString(),
+      userId:
+          json['provider_id']?.toString() ?? json['user_id']?.toString() ?? '',
+      userName:
+          json['provider_name']?.toString() ?? json['user_name']?.toString(),
+      userAvatar: json['provider_avatar']?.toString() ??
+          json['user_avatar']?.toString(),
       amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
       status: json['status']?.toString() ?? 'PENDING',
       proofUrl: json['proof_url']?.toString(),
       courseId: json['course_id']?.toString(),
       courseTitle: json['course_title']?.toString(),
-      paymentMethod: json['payment_method']?.toString() ?? 'تحويل بنكي',
-      notes: json['notes']?.toString(),
+      paymentMethod: json['payment_method']?.toString() ?? '',
+      notes: json['notes']?.toString() ?? json['description']?.toString(),
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString())
           : null,

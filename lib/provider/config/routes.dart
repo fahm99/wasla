@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../views/screens/splash_screen.dart';
 import '../views/screens/auth/login_screen.dart';
 import '../views/screens/auth/register_screen.dart';
 import '../views/screens/main/dashboard_screen.dart';
@@ -30,26 +29,21 @@ import '../views/screens/notifications/notifications_screen.dart';
 
 class AppRoutes {
   static final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/login',
     redirect: (BuildContext context, GoRouterState state) {
       final authProvider = context.read<AuthProvider>();
       final isLoggedIn = authProvider.isAuthenticated;
       final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register' ||
-          state.matchedLocation == '/';
+          state.matchedLocation == '/register';
       if (!isLoggedIn && !isAuthRoute) {
         return '/login';
       }
-      if (isLoggedIn && isAuthRoute && state.matchedLocation != '/') {
+      if (isLoggedIn && isAuthRoute) {
         return '/dashboard';
       }
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const SplashScreen(),
-      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),

@@ -6,7 +6,7 @@ class PaymentModel {
   final String? proofUrl;
   final String? providerId;
   final DateTime? createdAt;
-  final DateTime? updatedAt;
+  final DateTime? processedAt;
 
   PaymentModel({
     required this.id,
@@ -16,22 +16,22 @@ class PaymentModel {
     this.proofUrl,
     this.providerId,
     this.createdAt,
-    this.updatedAt,
+    this.processedAt,
   });
 
   factory PaymentModel.fromJson(Map<String, dynamic> json) {
     return PaymentModel(
-      id: json['id'] ?? '',
-      amount: (json['amount'] ?? 0).toDouble(),
-      status: json['status'] ?? 'معلق',
-      paymentMethod: json['payment_method'] ?? 'تحويل بنكي',
-      proofUrl: json['proof_url'],
-      providerId: json['provider_id'],
+      id: json['id']?.toString() ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0.0,
+      status: json['status']?.toString() ?? 'PENDING',
+      paymentMethod: json['payment_method']?.toString() ?? '',
+      proofUrl: json['proof_url']?.toString(),
+      providerId: json['provider_id']?.toString(),
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
+      processedAt: json['processed_at'] != null
+          ? DateTime.tryParse(json['processed_at'].toString())
           : null,
     );
   }
@@ -45,5 +45,21 @@ class PaymentModel {
       'proof_url': proofUrl,
       'provider_id': providerId,
     };
+  }
+
+  /// نص الحالة بالعربية
+  String get statusText {
+    switch (status) {
+      case 'PENDING':
+        return 'معلق';
+      case 'APPROVED':
+        return 'مقبول';
+      case 'REJECTED':
+        return 'مرفوض';
+      case 'REFUNDED':
+        return 'مسترد';
+      default:
+        return status;
+    }
   }
 }

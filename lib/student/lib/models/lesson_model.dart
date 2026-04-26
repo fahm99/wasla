@@ -33,7 +33,7 @@ class LessonModel {
     return LessonModel(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
-      type: json['type'] ?? 'text',
+      type: json['type']?.toString() ?? 'TEXT',
       content: json['content'],
       fileUrl: json['file_url'],
       fileName: json['file_name'],
@@ -43,7 +43,9 @@ class LessonModel {
       order: json['order'] ?? 0,
       moduleId: json['module_id'] ?? '',
       isCompleted: json['is_completed'] ?? false,
-      watchProgress: (json['watch_progress'] is num) ? (json['watch_progress'] as num).toDouble() : 0,
+      watchProgress: (json['watch_progress'] is num)
+          ? (json['watch_progress'] as num).toDouble()
+          : 0,
     );
   }
 
@@ -77,7 +79,9 @@ class LessonModel {
   String get formattedFileSize {
     if (fileSize == null) return '';
     if (fileSize! < 1024) return '$fileSize B';
-    if (fileSize! < 1024 * 1024) return '${(fileSize! / 1024).toStringAsFixed(1)} KB';
+    if (fileSize! < 1024 * 1024) {
+      return '${(fileSize! / 1024).toStringAsFixed(1)} KB';
+    }
     if (fileSize! < 1024 * 1024 * 1024) {
       return '${(fileSize! / (1024 * 1024)).toStringAsFixed(1)} MB';
     }

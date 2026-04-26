@@ -1,10 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:dropdown_button2/dropdown_button2.dart';
+import 'package:provider/provider.dart';
 import '../../../config/app_theme.dart';
 import '../../../config/constants.dart';
+import '../../../providers/payment_provider.dart';
 import '../../../widgets/custom_app_bar.dart';
 import '../../../widgets/upload_widget.dart';
 
@@ -21,8 +22,6 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
 
   String _paymentMethod = AppConstants.paymentMethodBank;
   File? _proofFile;
-  String _proofFileName = '';
-  int _proofFileSize = 0;
   bool _isSubmitting = false;
 
   @override
@@ -31,31 +30,14 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
     super.dispose();
   }
 
-  Future<void> _pickProof() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(type: FileType.image);
-      if (result != null && result.files.single.path != null) {
-        setState(() {
-          _proofFile = File(result.files.single.path!);
-          _proofFileName = result.files.single.name;
-          _proofFileSize = result.files.single.size;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('فشل في اختيار الملف: $e')));
-      }
-    }
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_proofFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('يرجى رفع إثبات الدفع'),
-            backgroundColor: AppTheme.redDanger),
+          content: Text('يرجى رفع إثبات الدفع'),
+          backgroundColor: AppTheme.redDanger,
+        ),
       );
       return;
     }
@@ -63,24 +45,40 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
     setState(() => _isSubmitting = true);
 
     try {
-      // Simulate upload
-      await Future.delayed(const Duration(seconds: 2));
+      final provider = context.read<PaymentProvider>();
+      final result = await provider.createPayment(
+        amount: double.parse(_amountController.text.trim()),
+        paymentMethod: _paymentMethod,
+        proofFile: _proofFile,
+      );
+
       setState(() => _isSubmitting = false);
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+      if (result != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
             content: Text('تم تسجيل الدفعة بنجاح وسيتم مراجعتها'),
-            backgroundColor: AppTheme.greenSuccess),
-      );
-      context.pop();
+            backgroundColor: AppTheme.greenSuccess,
+          ),
+        );
+        context.pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(provider.error ?? 'حدث خطأ أثناء تسجيل الدفعة'),
+            backgroundColor: AppTheme.redDanger,
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _isSubmitting = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('حدث خطأ: $e'),
-              backgroundColor: AppTheme.redDanger),
+          const SnackBar(
+            content: Text('حدث خطأ، يرجى المحاولة مرة أخرى'),
+            backgroundColor: AppTheme.redDanger,
+          ),
         );
       }
     }
@@ -170,26 +168,19 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                     if (value != null) setState(() => _paymentMethod = value);
                   },
                   dropdownStyleData: DropdownStyleData(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12))),
+                    decoration:
+                        BoxDecoration(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 // Proof upload
                 UploadWidget(
                   label: 'إثبات الدفع (صورة الإيصال)',
                   onFileSelected: (file, name, size) {
-                    setState(() {
-                      _proofFile = file;
-                      _proofFileName = name;
-                      _proofFileSize = size;
-                    });
+                    setState(() => _proofFile = file);
                   },
                   onFileRemoved: () {
-                    setState(() {
-                      _proofFile = null;
-                      _proofFileName = '';
-                      _proofFileSize = 0;
-                    });
+                    setState(() => _proofFile = null);
                   },
                   isLoading: _isSubmitting,
                 ),
@@ -210,10 +201,11 @@ class _UploadPaymentScreenState extends State<UploadPaymentScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                      color: Colors.white, strokeWidth: 2)),
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2),
+                              ),
                               SizedBox(width: 12),
                               Text('جاري التسجيل...',
                                   style: TextStyle(

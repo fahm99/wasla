@@ -1,6 +1,11 @@
 -- ============================================================
--- WASLA PLATFORM - SUPABASE DATABASE COMPLETE SCHEMA
--- منصة وصلة - قاعدة بيانات كاملة
+-- WASLA PLATFORM - UNIFIED DATABASE SCHEMA
+-- منصة وصلة - قاعدة البيانات الموحدة
+-- ============================================================
+-- الملف الموحد: يجمع database.sql + database-security-updates.sql
+-- الإصدار: 2.0 | تاريخ التوحيد: 2026-04-25
+-- التنفيذ: قم بتشغيل هذا الملف مرة واحدة على Supabase / PostgreSQL
+-- ملاحظة: CREATE OR REPLACE يضمن عدم التكرار
 -- ============================================================
 
 -- ============================================================
@@ -1330,3 +1335,493 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.enrollments;
 -- ============================================================
 -- END OF SCHEMA
 -- ============================================================
+-- ============================================================
+-- WASLA PLATFORM - SECURITY UPDATES FOR AUTHENTICATION SYSTEM
+-- Updated deployment-ready auth hardening script
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.login_attempts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email TEXT NOT NULL,
+    ip_address TEXT,
+    user_agent TEXT,
+    success BOOLEAN DEFAULT FALSE,
+    failure_reason TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_login_attempts_email_time
+    ON public.login_attempts(email, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_success
+    ON public.login_attempts(email, success, created_at);
+
+CREATE TABLE IF NOT EXISTS public.user_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    device_name TEXT,
+    device_type TEXT,
+    device_id TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    last_activity TIMESTAMPTZ DEFAULT NOW(),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    ended_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_sessions_user
+    ON public.user_sessions(user_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_user_sessions_device
+    ON public.user_sessions(device_id, is_active);
+
+CREATE TABLE IF NOT EXISTS public.security_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    event_type TEXT NOT NULL,
+    event_description TEXT,
+    ip_address TEXT,
+    user_agent TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    severity TEXT DEFAULT 'INFO' CHECK (severity IN ('INFO', 'WARNING', 'ERROR', 'CRITICAL')),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_logs_user
+    ON public.security_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_security_logs_type
+    ON public.security_logs(event_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_security_logs_severity
+    ON public.security_logs(severity, created_at DESC);
+
+ALTER TABLE public.profiles
+    ADD COLUMN IF NOT EXISTS two_factor_enabled BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS two_factor_secret TEXT,
+    ADD COLUMN IF NOT EXISTS two_factor_backup_codes TEXT[],
+    ADD COLUMN IF NOT EXISTS two_factor_verified_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS last_login_ip TEXT,
+    ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMPTZ,
+    ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS account_locked_until TIMESTAMPTZ;
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF COALESCE(NEW.raw_user_meta_data->>'role', 'STUDENT') = 'ADMIN' THEN
+        RAISE EXCEPTION 'Cannot create admin accounts through signup';
+    END IF;
+
+    INSERT INTO public.profiles (
+        id,
+        name,
+        email,
+        phone,
+        gender,
+        role,
+        status,
+        institution_type,
+        institution_name,
+        created_at,
+        updated_at
+    )
+    VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'name', NEW.email),
+        NEW.email,
+        NULLIF(NEW.raw_user_meta_data->>'phone', ''),
+        CASE
+            WHEN COALESCE(NEW.raw_user_meta_data->>'gender', '') = 'أنثى' THEN 'FEMALE'::gender_type
+            WHEN UPPER(COALESCE(NEW.raw_user_meta_data->>'gender', '')) = 'FEMALE' THEN 'FEMALE'::gender_type
+            ELSE 'MALE'::gender_type
+        END,
+        COALESCE(NEW.raw_user_meta_data->>'role', 'STUDENT')::user_role,
+        CASE
+            WHEN COALESCE(NEW.raw_user_meta_data->>'role', 'STUDENT') = 'PROVIDER' THEN 'PENDING'::user_status
+            WHEN NEW.email_confirmed_at IS NOT NULL THEN 'ACTIVE'::user_status
+            ELSE 'PENDING'::user_status
+        END,
+        CASE
+            WHEN NULLIF(NEW.raw_user_meta_data->>'institution_type', '') IS NULL THEN NULL
+            ELSE (NEW.raw_user_meta_data->>'institution_type')::institution_type
+        END,
+        NULLIF(NEW.raw_user_meta_data->>'institution_name', ''),
+        NOW(),
+        NOW()
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        name = EXCLUDED.name,
+        email = EXCLUDED.email,
+        phone = COALESCE(EXCLUDED.phone, public.profiles.phone),
+        institution_type = COALESCE(EXCLUDED.institution_type, public.profiles.institution_type),
+        institution_name = COALESCE(EXCLUDED.institution_name, public.profiles.institution_name),
+        updated_at = NOW();
+
+    INSERT INTO public.security_logs (
+        user_id,
+        event_type,
+        event_description,
+        severity
+    ) VALUES (
+        NEW.id,
+        'ACCOUNT_CREATED',
+        'تم إنشاء حساب جديد',
+        'INFO'
+    );
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.check_login_attempts(p_email TEXT)
+RETURNS JSON AS $$
+DECLARE
+    v_failed_count INTEGER;
+    v_last_attempt TIMESTAMPTZ;
+    v_is_locked BOOLEAN;
+    v_unlock_at TIMESTAMPTZ;
+BEGIN
+    SELECT COUNT(*), MAX(created_at)
+    INTO v_failed_count, v_last_attempt
+    FROM public.login_attempts
+    WHERE email = LOWER(TRIM(p_email))
+      AND success = FALSE
+      AND created_at > NOW() - INTERVAL '1 hour';
+
+    v_is_locked := v_failed_count >= 5;
+    IF v_is_locked THEN
+        v_unlock_at := v_last_attempt + INTERVAL '1 hour';
+    END IF;
+
+    RETURN json_build_object(
+        'is_locked', v_is_locked,
+        'failed_attempts', v_failed_count,
+        'unlock_at', v_unlock_at,
+        'remaining_attempts', GREATEST(0, 5 - v_failed_count)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.log_login_attempt(
+    p_email TEXT,
+    p_success BOOLEAN,
+    p_ip_address TEXT DEFAULT NULL,
+    p_user_agent TEXT DEFAULT NULL,
+    p_failure_reason TEXT DEFAULT NULL
+)
+RETURNS UUID AS $$
+DECLARE
+    v_attempt_id UUID;
+BEGIN
+    INSERT INTO public.login_attempts (
+        email,
+        success,
+        ip_address,
+        user_agent,
+        failure_reason
+    ) VALUES (
+        LOWER(TRIM(p_email)),
+        p_success,
+        p_ip_address,
+        p_user_agent,
+        p_failure_reason
+    ) RETURNING id INTO v_attempt_id;
+
+    IF p_success THEN
+        UPDATE public.profiles
+        SET
+            last_login_at = NOW(),
+            last_login_ip = p_ip_address,
+            failed_login_attempts = 0,
+            account_locked_until = NULL
+        WHERE LOWER(email) = LOWER(TRIM(p_email));
+    ELSE
+        UPDATE public.profiles
+        SET failed_login_attempts = COALESCE(failed_login_attempts, 0) + 1,
+            account_locked_until = CASE
+                WHEN COALESCE(failed_login_attempts, 0) + 1 >= 5 THEN NOW() + INTERVAL '1 hour'
+                ELSE account_locked_until
+            END
+        WHERE LOWER(email) = LOWER(TRIM(p_email));
+    END IF;
+
+    RETURN v_attempt_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.create_user_session(
+    p_user_id UUID,
+    p_device_name TEXT DEFAULT NULL,
+    p_device_type TEXT DEFAULT NULL,
+    p_device_id TEXT DEFAULT NULL,
+    p_ip_address TEXT DEFAULT NULL,
+    p_user_agent TEXT DEFAULT NULL
+)
+RETURNS UUID AS $$
+DECLARE
+    v_session_id UUID;
+BEGIN
+    IF p_device_id IS NOT NULL THEN
+        UPDATE public.user_sessions
+        SET is_active = FALSE,
+            ended_at = NOW()
+        WHERE user_id = p_user_id
+          AND device_id = p_device_id
+          AND is_active = TRUE;
+    END IF;
+
+    INSERT INTO public.user_sessions (
+        user_id,
+        device_name,
+        device_type,
+        device_id,
+        ip_address,
+        user_agent,
+        is_active
+    ) VALUES (
+        p_user_id,
+        p_device_name,
+        p_device_type,
+        p_device_id,
+        p_ip_address,
+        p_user_agent,
+        TRUE
+    ) RETURNING id INTO v_session_id;
+
+    INSERT INTO public.security_logs (
+        user_id,
+        event_type,
+        event_description,
+        ip_address,
+        user_agent,
+        metadata
+    ) VALUES (
+        p_user_id,
+        'LOGIN_SUCCESS',
+        'تسجيل دخول ناجح',
+        p_ip_address,
+        p_user_agent,
+        json_build_object(
+            'device_name', p_device_name,
+            'device_type', p_device_type,
+            'device_id', p_device_id
+        )
+    );
+
+    RETURN v_session_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.end_user_session(
+    p_session_id UUID DEFAULT NULL,
+    p_user_id UUID DEFAULT NULL,
+    p_end_all BOOLEAN DEFAULT FALSE
+)
+RETURNS INTEGER AS $$
+DECLARE
+    v_affected_rows INTEGER;
+BEGIN
+    IF p_end_all AND p_user_id IS NOT NULL THEN
+        UPDATE public.user_sessions
+        SET is_active = FALSE,
+            ended_at = NOW()
+        WHERE user_id = p_user_id
+          AND is_active = TRUE;
+
+        GET DIAGNOSTICS v_affected_rows = ROW_COUNT;
+
+        INSERT INTO public.security_logs (
+            user_id,
+            event_type,
+            event_description,
+            severity
+        ) VALUES (
+            p_user_id,
+            'LOGOUT_ALL_DEVICES',
+            'تسجيل خروج من جميع الأجهزة',
+            'WARNING'
+        );
+    ELSIF p_session_id IS NOT NULL THEN
+        UPDATE public.user_sessions
+        SET is_active = FALSE,
+            ended_at = NOW()
+        WHERE id = p_session_id
+          AND is_active = TRUE;
+
+        GET DIAGNOSTICS v_affected_rows = ROW_COUNT;
+    ELSE
+        v_affected_rows := 0;
+    END IF;
+
+    RETURN v_affected_rows;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.log_security_event(
+    p_user_id UUID,
+    p_event_type TEXT,
+    p_event_description TEXT,
+    p_ip_address TEXT DEFAULT NULL,
+    p_user_agent TEXT DEFAULT NULL,
+    p_metadata JSONB DEFAULT '{}'::jsonb,
+    p_severity TEXT DEFAULT 'INFO'
+)
+RETURNS UUID AS $$
+DECLARE
+    v_log_id UUID;
+BEGIN
+    INSERT INTO public.security_logs (
+        user_id,
+        event_type,
+        event_description,
+        ip_address,
+        user_agent,
+        metadata,
+        severity
+    ) VALUES (
+        p_user_id,
+        p_event_type,
+        p_event_description,
+        p_ip_address,
+        p_user_agent,
+        COALESCE(p_metadata, '{}'::jsonb),
+        p_severity
+    ) RETURNING id INTO v_log_id;
+
+    RETURN v_log_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.cleanup_old_logs()
+RETURNS INTEGER AS $$
+DECLARE
+    v_deleted_count INTEGER := 0;
+    v_temp_count INTEGER;
+BEGIN
+    DELETE FROM public.login_attempts
+    WHERE created_at < NOW() - INTERVAL '90 days';
+    GET DIAGNOSTICS v_temp_count = ROW_COUNT;
+    v_deleted_count := v_deleted_count + v_temp_count;
+
+    DELETE FROM public.user_sessions
+    WHERE is_active = FALSE
+      AND ended_at < NOW() - INTERVAL '90 days';
+    GET DIAGNOSTICS v_temp_count = ROW_COUNT;
+    v_deleted_count := v_deleted_count + v_temp_count;
+
+    DELETE FROM public.security_logs
+    WHERE created_at < NOW() - INTERVAL '180 days'
+      AND severity != 'CRITICAL';
+    GET DIAGNOSTICS v_temp_count = ROW_COUNT;
+    v_deleted_count := v_deleted_count + v_temp_count;
+
+    RETURN v_deleted_count;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+ALTER TABLE public.login_attempts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.security_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can view login attempts" ON public.login_attempts;
+CREATE POLICY "Admins can view login attempts" ON public.login_attempts
+    FOR SELECT USING (
+        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN')
+    );
+
+DROP POLICY IF EXISTS "Users can view own sessions" ON public.user_sessions;
+CREATE POLICY "Users can view own sessions" ON public.user_sessions
+    FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can end own sessions" ON public.user_sessions;
+CREATE POLICY "Users can end own sessions" ON public.user_sessions
+    FOR UPDATE USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Admins can view all sessions" ON public.user_sessions;
+CREATE POLICY "Admins can view all sessions" ON public.user_sessions
+    FOR SELECT USING (
+        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN')
+    );
+
+DROP POLICY IF EXISTS "Users can view own security logs" ON public.security_logs;
+CREATE POLICY "Users can view own security logs" ON public.security_logs
+    FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Admins can view all security logs" ON public.security_logs;
+CREATE POLICY "Admins can view all security logs" ON public.security_logs
+    FOR SELECT USING (
+        EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'ADMIN')
+    );
+
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+CREATE POLICY "Users can insert their own profile" ON public.profiles
+    FOR INSERT WITH CHECK (
+        id = auth.uid() AND role IN ('STUDENT', 'PROVIDER')
+    );
+
+CREATE TABLE IF NOT EXISTS public.password_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    password_hash TEXT NOT NULL,
+    changed_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_history_user
+    ON public.password_history(user_id, changed_at DESC);
+
+ALTER TABLE public.password_history ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own password history" ON public.password_history;
+CREATE POLICY "Users can view own password history" ON public.password_history
+    FOR SELECT USING (user_id = auth.uid());
+
+CREATE OR REPLACE VIEW public.recent_failed_logins AS
+SELECT
+    la.email,
+    la.ip_address,
+    la.failure_reason,
+    la.created_at,
+    p.name,
+    p.role,
+    p.status
+FROM public.login_attempts la
+LEFT JOIN public.profiles p ON LOWER(p.email) = LOWER(la.email)
+WHERE la.success = FALSE
+  AND la.created_at > NOW() - INTERVAL '7 days'
+ORDER BY la.created_at DESC;
+
+CREATE OR REPLACE VIEW public.active_sessions_summary AS
+SELECT
+    us.user_id,
+    p.name,
+    p.email,
+    p.role,
+    COUNT(*) as active_sessions_count,
+    MAX(us.last_activity) as last_activity,
+    array_agg(us.device_name) as devices
+FROM public.user_sessions us
+JOIN public.profiles p ON p.id = us.user_id
+WHERE us.is_active = TRUE
+GROUP BY us.user_id, p.name, p.email, p.role;
+
+CREATE OR REPLACE VIEW public.critical_security_events AS
+SELECT
+    sl.user_id,
+    p.name,
+    p.email,
+    p.role,
+    sl.event_type,
+    sl.event_description,
+    sl.ip_address,
+    sl.created_at
+FROM public.security_logs sl
+LEFT JOIN public.profiles p ON p.id = sl.user_id
+WHERE sl.severity IN ('ERROR', 'CRITICAL')
+  AND sl.created_at > NOW() - INTERVAL '30 days'
+ORDER BY sl.created_at DESC;
+
+INSERT INTO public.system_settings (key, value, description) VALUES
+('security_event_types',
+ '["ACCOUNT_CREATED","LOGIN_SUCCESS","LOGIN_FAILED","LOGOUT","LOGOUT_ALL_DEVICES","PASSWORD_CHANGED","PASSWORD_RESET_REQUESTED","PASSWORD_RESET_COMPLETED","PROFILE_UPDATED","2FA_ENABLED","2FA_DISABLED","2FA_VERIFIED","SUSPICIOUS_ACTIVITY","ACCOUNT_LOCKED","ACCOUNT_UNLOCKED"]',
+ 'أنواع الأحداث الأمنية المدعومة')
+ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;

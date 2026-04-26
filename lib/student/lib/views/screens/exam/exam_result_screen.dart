@@ -37,16 +37,16 @@ class _ExamResultScreenState extends State<ExamResultScreen> {
     final result = provider.examResult;
 
     if (provider.isLoading) {
-      return Scaffold(
-        appBar: const CustomAppBar(title: 'نتيجة الاختبار', showBack: true),
-        body: const LoadingWidget(message: 'جاري تحميل النتيجة...'),
+      return const Scaffold(
+        appBar: CustomAppBar(title: 'نتيجة الاختبار', showBack: true),
+        body: LoadingWidget(message: 'جاري تحميل النتيجة...'),
       );
     }
 
     if (result == null) {
-      return Scaffold(
-        appBar: const CustomAppBar(title: 'نتيجة الاختبار', showBack: true),
-        body: const Center(child: Text('لم يتم العثور على النتيجة')),
+      return const Scaffold(
+        appBar: CustomAppBar(title: 'نتيجة الاختبار', showBack: true),
+        body: Center(child: Text('لم يتم العثور على النتيجة')),
       );
     }
 

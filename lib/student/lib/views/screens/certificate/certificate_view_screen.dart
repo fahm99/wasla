@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../config/app_theme.dart';
@@ -33,16 +32,16 @@ class _CertificateViewScreenState extends State<CertificateViewScreen> {
     final cert = provider.currentCertificate;
 
     if (provider.isLoading) {
-      return Scaffold(
-        appBar: const CustomAppBar(title: 'الشهادة', showBack: true),
-        body: const LoadingWidget(message: 'جاري تحميل الشهادة...'),
+      return const Scaffold(
+        appBar: CustomAppBar(title: 'الشهادة', showBack: true),
+        body: LoadingWidget(message: 'جاري تحميل الشهادة...'),
       );
     }
 
     if (cert == null) {
-      return Scaffold(
-        appBar: const CustomAppBar(title: 'الشهادة', showBack: true),
-        body: const Center(child: Text('الشهادة غير موجودة')),
+      return const Scaffold(
+        appBar: CustomAppBar(title: 'الشهادة', showBack: true),
+        body: Center(child: Text('الشهادة غير موجودة')),
       );
     }
 
@@ -108,9 +107,9 @@ class _CertificateViewScreenState extends State<CertificateViewScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  Text(
+                  const Text(
                     'يشهد بأن',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Cairo',
                       fontSize: 14,
                       color: AppTheme.greyText,

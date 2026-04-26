@@ -327,7 +327,7 @@ class _ExamTakeScreenState extends State<ExamTakeScreen> {
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

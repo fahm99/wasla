@@ -57,8 +57,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
 
     if (confirmed == true) {
       setState(() => _isActionLoading = true);
-      final provider =
-          Provider.of<PaymentsProvider>(context, listen: false);
+      final provider = Provider.of<PaymentsProvider>(context, listen: false);
       final success = await provider.approvePayment(widget.paymentId);
       setState(() => _isActionLoading = false);
 
@@ -85,67 +84,65 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
             color: AppTheme.primaryDarkBlue,
           ),
         ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'يرجى إدخال سبب الرفض (اختياري)',
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  fontSize: 14,
-                  color: AppTheme.darkGrayText,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: reasonController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'سبب الرفض...',
-                  hintStyle: const TextStyle(fontFamily: 'Cairo'),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                Constants.actionCancel,
-                style: TextStyle(fontFamily: 'Cairo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'يرجى إدخال سبب الرفض (اختياري)',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontSize: 14,
+                color: AppTheme.darkGrayText,
               ),
             ),
-            ElevatedButton(
-              onPressed: () =>
-                  Navigator.pop(context, reasonController.text.trim()),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.redDanger,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text(
-                Constants.actionReject,
-                style: TextStyle(
-                  fontFamily: 'Cairo',
-                  color: AppTheme.white,
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'سبب الرفض...',
+                hintStyle: const TextStyle(fontFamily: 'Cairo'),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
           ],
         ),
-      
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              Constants.actionCancel,
+              style: TextStyle(fontFamily: 'Cairo'),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.pop(context, reasonController.text.trim()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.redDanger,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text(
+              Constants.actionReject,
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                color: AppTheme.white,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
     reasonController.dispose();
 
     if (reason != null) {
       setState(() => _isActionLoading = true);
-      final provider =
-          Provider.of<PaymentsProvider>(context, listen: false);
-      final success =
-          await provider.rejectPayment(widget.paymentId, reason.isEmpty ? null : reason);
+      final provider = Provider.of<PaymentsProvider>(context, listen: false);
+      final success = await provider.rejectPayment(
+          widget.paymentId, reason.isEmpty ? null : reason);
       setState(() => _isActionLoading = false);
 
       if (success) {
@@ -173,100 +170,143 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.lightGrayBg,
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         title: 'تفاصيل الدفعة',
         showBack: true,
         backgroundColor: AppTheme.primaryDarkBlue,
       ),
-        body: FutureBuilder(
-          future: Provider.of<PaymentsProvider>(context, listen: false)
-              .getPaymentDetail(widget.paymentId),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const LoadingWidget();
-            }
+      body: FutureBuilder(
+        future: Provider.of<PaymentsProvider>(context, listen: false)
+            .getPaymentDetail(widget.paymentId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const LoadingWidget();
+          }
 
-            if (snapshot.hasError) {
-              return const Center(
-                child: Text(
-                  'حدث خطأ في تحميل البيانات',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    color: AppTheme.redDanger,
-                  ),
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                'حدث خطأ في تحميل البيانات',
+                style: TextStyle(
+                  fontFamily: 'Cairo',
+                  color: AppTheme.redDanger,
                 ),
-              );
-            }
+              ),
+            );
+          }
 
-            final payment = snapshot.data!;
-            final statusColor = _getStatusColor(payment.status);
+          final payment = snapshot.data!;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Amount Card
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 3,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.primaryDarkBlue,
-                            AppTheme.primaryDarkBlue.withOpacity(0.8),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        children: [
-                          const Text(
-                            'المبلغ',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 14,
-                              color: Colors.white70,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${payment.amount} ر.س',
-                            style: const TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 32,
-                              fontWeight: FontWeight.w800,
-                              color: AppTheme.yellowAccent,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppTheme.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              payment.statusText,
-                              style: const TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppTheme.white,
-                              ),
-                            ),
-                          ),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Amount Card
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 3,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryDarkBlue,
+                          AppTheme.primaryDarkBlue.withOpacity(0.8),
                         ],
                       ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'المبلغ',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '${payment.amount} ر.س',
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.yellowAccent,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            payment.statusText,
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  // Payment Info
+                ),
+                const SizedBox(height: 16),
+                // Payment Info
+                Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'معلومات الدفعة',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primaryDarkBlue,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _infoRow('المستخدم', payment.userName ?? 'غير محدد'),
+                        _infoRow('طريقة الدفع', payment.paymentMethodText),
+                        if (payment.courseTitle != null)
+                          _infoRow('الكورس', payment.courseTitle!),
+                        _infoRow(
+                            'تاريخ الطلب',
+                            payment.createdAt != null
+                                ? DateFormat('yyyy/MM/dd - HH:mm')
+                                    .format(payment.createdAt!)
+                                : '-'),
+                        if (payment.processedAt != null)
+                          _infoRow(
+                              'تاريخ المعالجة',
+                              DateFormat('yyyy/MM/dd - HH:mm')
+                                  .format(payment.processedAt!)),
+                        if (payment.notes != null && payment.notes!.isNotEmpty)
+                          _infoRow('ملاحظات', payment.notes!),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Proof Image
+                if (payment.proofUrl != null &&
+                    payment.proofUrl!.isNotEmpty) ...[
                   Card(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -277,7 +317,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'معلومات الدفعة',
+                            'إثبات الدفع',
                             style: TextStyle(
                               fontFamily: 'Cairo',
                               fontSize: 16,
@@ -285,133 +325,85 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> {
                               color: AppTheme.primaryDarkBlue,
                             ),
                           ),
-                          const SizedBox(height: 16),
-                          _infoRow('المستخدم', payment.userName ?? 'غير محدد'),
-                          _infoRow('طريقة الدفع', payment.paymentMethodText),
-                          if (payment.courseTitle != null)
-                            _infoRow('الكورس', payment.courseTitle!),
-                          _infoRow(
-                              'تاريخ الطلب',
-                              payment.createdAt != null
-                                  ? DateFormat('yyyy/MM/dd - HH:mm')
-                                      .format(payment.createdAt!)
-                                  : '-'),
-                          if (payment.processedAt != null)
-                            _infoRow(
-                                'تاريخ المعالجة',
-                                DateFormat('yyyy/MM/dd - HH:mm')
-                                    .format(payment.processedAt!)),
-                          if (payment.notes != null &&
-                              payment.notes!.isNotEmpty)
-                            _infoRow('ملاحظات', payment.notes!),
+                          const SizedBox(height: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: payment.proofUrl!,
+                              width: double.infinity,
+                              fit: BoxFit.contain,
+                              placeholder: (_, __) => Container(
+                                height: 200,
+                                color: AppTheme.lightGrayBg,
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation(
+                                        AppTheme.primaryDarkBlue),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (_, __, ___) => Container(
+                                height: 200,
+                                color: AppTheme.lightGrayBg,
+                                child: const Icon(Icons.broken_image,
+                                    size: 48, color: AppTheme.darkGrayText),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Proof Image
-                  if (payment.proofUrl != null &&
-                      payment.proofUrl!.isNotEmpty) ...[
-                    Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'إثبات الدفع',
-                              style: TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryDarkBlue,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: CachedNetworkImage(
-                                imageUrl: payment.proofUrl!,
-                                width: double.infinity,
-                                fit: BoxFit.contain,
-                                placeholder: (_, __) => Container(
-                                  height: 200,
-                                  color: AppTheme.lightGrayBg,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                      valueColor: AlwaysStoppedAnimation(
-                                          AppTheme.primaryDarkBlue),
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (_, __, ___) => Container(
-                                  height: 200,
-                                  color: AppTheme.lightGrayBg,
-                                  child: const Icon(Icons.broken_image,
-                                      size: 48, color: AppTheme.darkGrayText),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  // Action Buttons
-                  if (payment.status == 'PENDING') ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed:
-                            _isActionLoading ? null : _approve,
-                        icon: const Icon(Icons.check_circle),
-                        label: const Text(
-                          'قبول الدفعة',
-                          style: TextStyle(fontFamily: 'Cairo'),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.greenSuccess,
-                          foregroundColor: AppTheme.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed:
-                            _isActionLoading ? null : _reject,
-                        icon: const Icon(Icons.cancel),
-                        label: const Text(
-                          'رفض الدفعة',
-                          style: TextStyle(fontFamily: 'Cairo'),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.redDanger,
-                          foregroundColor: AppTheme.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
                 ],
-              ),
-            );
-          },
-        ),
-      
+                // Action Buttons
+                if (payment.status == 'PENDING') ...[
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isActionLoading ? null : _approve,
+                      icon: const Icon(Icons.check_circle),
+                      label: const Text(
+                        'قبول الدفعة',
+                        style: TextStyle(fontFamily: 'Cairo'),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.greenSuccess,
+                        foregroundColor: AppTheme.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _isActionLoading ? null : _reject,
+                      icon: const Icon(Icons.cancel),
+                      label: const Text(
+                        'رفض الدفعة',
+                        style: TextStyle(fontFamily: 'Cairo'),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.redDanger,
+                        foregroundColor: AppTheme.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 

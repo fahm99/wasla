@@ -39,11 +39,11 @@ class CertificateCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
+                const Row(
                   children: [
                     Icon(Icons.verified, color: AppTheme.secondaryAmber, size: 20),
-                    const SizedBox(width: 6),
-                    const Text(
+                    SizedBox(width: 6),
+                    Text(
                       'شهادة إتمام',
                       style: TextStyle(
                         fontFamily: 'Cairo',
@@ -100,9 +100,9 @@ class CertificateCard extends StatelessWidget {
                     color: Colors.white60,
                   ),
                 ),
-                Row(
+                const Row(
                   children: [
-                    const Text(
+                    Text(
                       'عرض',
                       style: TextStyle(
                         fontFamily: 'Cairo',
@@ -111,8 +111,8 @@ class CertificateCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.arrow_back, color: AppTheme.white, size: 16),
+                    SizedBox(width: 4),
+                    Icon(Icons.arrow_back, color: AppTheme.white, size: 16),
                   ],
                 ),
               ],

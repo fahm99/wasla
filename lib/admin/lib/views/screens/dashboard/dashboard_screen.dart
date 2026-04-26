@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../config/app_theme.dart';
 import '../../../config/constants.dart';
 import '../../../providers/auth_provider.dart';
@@ -176,7 +175,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildMonthlyChart(DashboardProvider provider) {
     return ChartWidget(
       title: 'الحسابات الشهرية',
-      trailing: Text(
+      trailing: const Text(
         'آخر 6 أشهر',
         style: TextStyle(
           fontFamily: 'Cairo',
@@ -202,7 +201,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               height: 200,
               child: LineChart(
                 LineChartData(
-                  gridData: FlGridData(show: false),
+                  gridData: const FlGridData(show: false),
                   titlesData: FlTitlesData(
                     topTitles: const AxisTitles(
                         sideTitles: SideTitles(showTitles: false)),

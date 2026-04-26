@@ -1,13 +1,17 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:wasla_provider/shared/services/unified_auth_service.dart';
 import '../models/user_model.dart';
 import 'storage_service.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final UnifiedAuthService _unifiedAuthService =
+      UnifiedAuthService(Supabase.instance.client);
   final StorageService _storageService = StorageService();
 
-  // Sign up
-  Future<UserModel> signUp({
+  Stream<AuthState> get authStateChanges => _unifiedAuthService.authStateChanges;
+
+  Future<Map<String, dynamic>> signUp({
     required String email,
     required String password,
     required String name,
@@ -16,97 +20,63 @@ class AuthService {
     String? institutionName,
   }) async {
     try {
-      // تحويل نوع المؤسسة إلى الصيغة الصحيحة
-      String? institutionTypeEnum;
-      if (institutionType != null) {
-        switch (institutionType) {
-          case 'جامعة':
-            institutionTypeEnum = 'UNIVERSITY';
-            break;
-          case 'مدرسة':
-            institutionTypeEnum = 'SCHOOL';
-            break;
-          case 'معهد':
-            institutionTypeEnum = 'INSTITUTE';
-            break;
-          case 'مركز تدريب':
-            institutionTypeEnum = 'TRAINING_CENTER';
-            break;
-          default:
-            institutionTypeEnum = 'INDEPENDENT';
-        }
-      }
-
-      final response = await _supabase.auth.signUp(
+      return await _unifiedAuthService.signUp(
         email: email,
         password: password,
-        data: {
-          'name': name,
-          'phone': phone,
-          'role': 'PROVIDER', // دائماً مزود خدمة
-          'institution_type': institutionTypeEnum,
-          'institution_name': institutionName,
-        },
+        name: name,
+        phone: phone,
+        role: AuthRoles.provider,
+        institutionType: _mapInstitutionType(institutionType),
+        institutionName: institutionName,
       );
-
-      if (response.user == null) {
-        throw Exception('فشل في إنشاء الحساب');
-      }
-
-      // الانتظار قليلاً للسماح للـ trigger بإنشاء السجل
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // جلب بيانات المستخدم من قاعدة البيانات
-      return await getUserProfile(response.user!.id);
     } catch (e) {
       throw _handleAuthError(e);
     }
   }
 
-  // Sign in
   Future<UserModel> signIn({
     required String email,
     required String password,
   }) async {
     try {
-      final response = await _supabase.auth.signInWithPassword(
+      final result = await _unifiedAuthService.signIn(
         email: email,
         password: password,
+        requiredRole: AuthRoles.provider,
       );
-
-      if (response.user == null) {
-        throw Exception('فشل في تسجيل الدخول');
-      }
-
-      return await getUserProfile(response.user!.id);
+      return UserModel.fromJson(result['profile']);
     } catch (e) {
       throw _handleAuthError(e);
     }
   }
 
-  // Sign out
   Future<void> signOut() async {
-    await _supabase.auth.signOut();
+    await _unifiedAuthService.signOut();
   }
 
-  // Get current user
   User? getCurrentUser() {
     return _supabase.auth.currentUser;
   }
 
-  // Get user profile from profiles table
+  Future<UserModel?> getCurrentUserProfile() async {
+    final result = await _unifiedAuthService.getCurrentUser(requiredRole: AuthRoles.provider);
+    if (result == null) return null;
+    return UserModel.fromJson(result['profile']);
+  }
+
+  Future<void> resendConfirmationEmail(String email) async {
+    await _unifiedAuthService.resendEmailConfirmation(email);
+  }
+
   Future<UserModel> getUserProfile(String userId) async {
     try {
-      final response =
-          await _supabase.from('profiles').select().eq('id', userId).single();
-
+      final response = await _supabase.from('profiles').select().eq('id', userId).single();
       return UserModel.fromJson(response);
-    } catch (e) {
+    } catch (_) {
       throw Exception('فشل في جلب بيانات المستخدم');
     }
   }
 
-  // Update profile
   Future<UserModel> updateProfile({
     required String userId,
     String? name,
@@ -116,27 +86,20 @@ class AuthService {
     String? bankAccount,
   }) async {
     try {
-      final updates = <String, dynamic>{};
-      if (name != null) updates['name'] = name;
-      if (phone != null) updates['phone'] = phone;
-      if (institutionType != null) {
-        updates['institution_type'] = institutionType;
-      }
-      if (institutionName != null) {
-        updates['institution_name'] = institutionName;
-      }
-      if (bankAccount != null) updates['bank_account'] = bankAccount;
-      updates['updated_at'] = DateTime.now().toIso8601String();
-
-      await _supabase.from('profiles').update(updates).eq('id', userId);
-
-      return await getUserProfile(userId);
-    } catch (e) {
+      final response = await _unifiedAuthService.updateProfile(
+        userId: userId,
+        name: name,
+        phone: phone,
+        institutionType: _mapInstitutionType(institutionType),
+        institutionName: institutionName,
+        bankAccount: bankAccount,
+      );
+      return UserModel.fromJson(response);
+    } catch (_) {
       throw Exception('فشل في تحديث البيانات');
     }
   }
 
-  // Update avatar
   Future<String> updateAvatar({
     required String userId,
     required dynamic imageFile,
@@ -148,64 +111,72 @@ class AuthService {
       );
 
       await _supabase.from('profiles').update({'avatar': url}).eq('id', userId);
-
       return url;
-    } catch (e) {
+    } catch (_) {
       throw Exception('فشل في تحديث الصورة الشخصية');
     }
   }
 
-  // Change password
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
     try {
-      // Verify current password by re-authenticating
       final user = _supabase.auth.currentUser;
       if (user == null) throw Exception('المستخدم غير مسجل الدخول');
 
-      await _supabase.auth.signInWithPassword(
+      await _unifiedAuthService.signIn(
         email: user.email!,
         password: currentPassword,
+        requiredRole: AuthRoles.provider,
       );
 
-      await _supabase.auth.updateUser(
-        UserAttributes(password: newPassword),
-      );
-    } on AuthException catch (e) {
-      if (e.message.contains('Invalid login')) {
-        throw Exception('كلمة المرور الحالية غير صحيحة');
-      }
-      throw Exception('فشل في تغيير كلمة المرور');
+      await _unifiedAuthService.updatePassword(newPassword);
     } catch (e) {
-      if (e is Exception) rethrow;
-      throw Exception('فشل في تغيير كلمة المرور');
+      throw _handleAuthError(e);
     }
   }
 
-  // Listen to auth state changes
-  Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
+  String? _mapInstitutionType(String? institutionType) {
+    if (institutionType == null || institutionType.isEmpty) return null;
+
+    switch (institutionType) {
+      case 'جامعة':
+        return 'UNIVERSITY';
+      case 'مدرسة':
+        return 'SCHOOL';
+      case 'معهد':
+        return 'INSTITUTE';
+      case 'مركز تدريب':
+        return 'TRAINING_CENTER';
+      default:
+        return 'INDEPENDENT';
+    }
+  }
 
   Exception _handleAuthError(dynamic error) {
-    if (error is AuthException) {
-      switch (error.message) {
-        case 'Invalid login credentials':
-          return Exception('البريد الإلكتروني أو كلمة المرور غير صحيحة');
-        case 'User already registered':
-          return Exception('البريد الإلكتروني مسجل مسبقاً');
-        case 'Password should be at least 6 characters.':
-          return Exception('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
-        default:
-          return Exception('خطأ في المصادقة: ${error.message}');
-      }
+    final message = error.toString();
+    if (message.contains('INVALID_CREDENTIALS')) {
+      return Exception('البريد الإلكتروني أو كلمة المرور غير صحيحة');
     }
-    if (error is PostgrestException) {
-      return Exception('خطأ في قاعدة البيانات: ${error.message}');
+    if (message.contains('EMAIL_EXISTS')) {
+      return Exception('البريد الإلكتروني مسجل مسبقاً');
     }
-    if (error is Exception) {
-      return error;
+    if (message.contains('EMAIL_NOT_CONFIRMED')) {
+      return Exception('يرجى تأكيد البريد الإلكتروني أولاً');
     }
-    return Exception('حدث خطأ غير متوقع: $error');
+    if (message.contains('ACCOUNT_PENDING')) {
+      return Exception('حسابك بانتظار موافقة الإدارة');
+    }
+    if (message.contains('ACCOUNT_LOCKED')) {
+      return Exception('تم قفل الحساب مؤقتاً بسبب محاولات فاشلة متعددة');
+    }
+    if (message.contains('UNAUTHORIZED')) {
+      return Exception('هذا الحساب غير مخصص لتطبيق مزود الخدمة');
+    }
+    if (message.contains('WEAK_PASSWORD')) {
+      return Exception('كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على حرف كبير ورقم ورمز خاص');
+    }
+    return Exception('حدث خطأ في المصادقة');
   }
 }

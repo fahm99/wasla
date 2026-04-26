@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../models/course_model.dart';
 import '../models/module_model.dart';
 import '../models/lesson_model.dart';
@@ -80,16 +80,20 @@ class SupabaseService {
       }
 
       final userId = _supabase.auth.currentUser!.id;
-      final response = await _supabase.from('courses').insert({
-        'title': title,
-        'description': description,
-        'price': price,
-        'level': level,
-        'category': category,
-        'image': imageUrl,
-        'status': 'مسودة',
-        'provider_id': userId,
-      }).select().single();
+      final response = await _supabase
+          .from('courses')
+          .insert({
+            'title': title,
+            'description': description,
+            'price': price,
+            'level': level,
+            'category': category,
+            'image': imageUrl,
+            'status': 'DRAFT',
+            'provider_id': userId,
+          })
+          .select()
+          .single();
 
       return CourseModel.fromJson(response);
     } catch (e) {
@@ -146,13 +150,10 @@ class SupabaseService {
 
   Future<void> publishCourse(String courseId, bool publish) async {
     try {
-      await _supabase
-          .from('courses')
-          .update({
-            'status': publish ? 'منشور' : 'مسودة',
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', courseId);
+      await _supabase.from('courses').update({
+        'status': publish ? 'PUBLISHED' : 'DRAFT',
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', courseId);
     } catch (e) {
       throw Exception('فشل في تحديث حالة الدورة');
     }
@@ -184,11 +185,15 @@ class SupabaseService {
     required int order,
   }) async {
     try {
-      final response = await _supabase.from('modules').insert({
-        'title': title,
-        'course_id': courseId,
-        'order': order,
-      }).select().single();
+      final response = await _supabase
+          .from('modules')
+          .insert({
+            'title': title,
+            'course_id': courseId,
+            'order': order,
+          })
+          .select()
+          .single();
 
       return ModuleModel.fromJson(response);
     } catch (e) {
@@ -232,8 +237,7 @@ class SupabaseService {
       for (final item in moduleOrders) {
         await _supabase
             .from('modules')
-            .update({'order': item['order']})
-            .eq('id', item['id']);
+            .update({'order': item['order']}).eq('id', item['id']);
       }
     } catch (e) {
       throw Exception('فشل في إعادة ترتيب الوحدات');
@@ -250,7 +254,9 @@ class SupabaseService {
           .eq('module_id', moduleId)
           .order('order', ascending: true);
 
-      return response.map<LessonModel>((json) => LessonModel.fromJson(json)).toList();
+      return response
+          .map<LessonModel>((json) => LessonModel.fromJson(json))
+          .toList();
     } catch (e) {
       throw Exception('فشل في جلب الدروس');
     }
@@ -265,7 +271,7 @@ class SupabaseService {
     File? file,
     String? fileName,
     int? fileSize,
-    String? duration,
+    int? duration,
   }) async {
     try {
       String? fileUrl;
@@ -278,17 +284,21 @@ class SupabaseService {
         );
       }
 
-      final response = await _supabase.from('lessons').insert({
-        'title': title,
-        'type': type,
-        'module_id': moduleId,
-        'order': order,
-        'content': content,
-        'file_url': fileUrl,
-        'file_name': fileName,
-        'file_size': fileSize,
-        'duration': duration,
-      }).select().single();
+      final response = await _supabase
+          .from('lessons')
+          .insert({
+            'title': title,
+            'type': type,
+            'module_id': moduleId,
+            'order': order,
+            'content': content,
+            'file_url': fileUrl,
+            'file_name': fileName,
+            'file_size': fileSize,
+            'duration': duration,
+          })
+          .select()
+          .single();
 
       return LessonModel.fromJson(response);
     } catch (e) {
@@ -304,7 +314,7 @@ class SupabaseService {
     File? file,
     String? fileName,
     int? fileSize,
-    String? duration,
+    int? duration,
     int? order,
   }) async {
     try {
@@ -352,8 +362,7 @@ class SupabaseService {
       for (final item in lessonOrders) {
         await _supabase
             .from('lessons')
-            .update({'order': item['order']})
-            .eq('id', item['id']);
+            .update({'order': item['order']}).eq('id', item['id']);
       }
     } catch (e) {
       throw Exception('فشل في إعادة ترتيب الدروس');
@@ -385,16 +394,22 @@ class SupabaseService {
     required String description,
     required int passingScore,
     required String courseId,
-    String? duration,
+    int duration = 30,
+    int maxAttempts = 3,
   }) async {
     try {
-      final response = await _supabase.from('exams').insert({
-        'title': title,
-        'description': description,
-        'passing_score': passingScore,
-        'course_id': courseId,
-        'duration': duration,
-      }).select().single();
+      final response = await _supabase
+          .from('exams')
+          .insert({
+            'title': title,
+            'description': description,
+            'passing_score': passingScore,
+            'course_id': courseId,
+            'duration': duration,
+            'max_attempts': maxAttempts,
+          })
+          .select()
+          .single();
 
       return ExamModel.fromJson(response);
     } catch (e) {
@@ -407,7 +422,8 @@ class SupabaseService {
     String? title,
     String? description,
     int? passingScore,
-    String? duration,
+    int? duration,
+    int? maxAttempts,
   }) async {
     try {
       Map<String, dynamic> updates = {};
@@ -415,6 +431,7 @@ class SupabaseService {
       if (description != null) updates['description'] = description;
       if (passingScore != null) updates['passing_score'] = passingScore;
       if (duration != null) updates['duration'] = duration;
+      if (maxAttempts != null) updates['max_attempts'] = maxAttempts;
 
       final response = await _supabase
           .from('exams')
@@ -464,13 +481,17 @@ class SupabaseService {
     List<Map<String, dynamic>>? answers,
   }) async {
     try {
-      final response = await _supabase.from('questions').insert({
-        'text': text,
-        'type': type,
-        'points': points,
-        'exam_id': examId,
-        'order': order,
-      }).select().single();
+      final response = await _supabase
+          .from('questions')
+          .insert({
+            'text': text,
+            'type': type,
+            'points': points,
+            'exam_id': examId,
+            'order': order,
+          })
+          .select()
+          .single();
 
       final question = QuestionModel.fromJson(response);
 
@@ -550,11 +571,15 @@ class SupabaseService {
     required String questionId,
   }) async {
     try {
-      final response = await _supabase.from('answers').insert({
-        'text': text,
-        'is_correct': isCorrect,
-        'question_id': questionId,
-      }).select().single();
+      final response = await _supabase
+          .from('answers')
+          .insert({
+            'text': text,
+            'is_correct': isCorrect,
+            'question_id': questionId,
+          })
+          .select()
+          .single();
 
       return AnswerModel.fromJson(response);
     } catch (e) {
@@ -592,7 +617,8 @@ class SupabaseService {
     try {
       final response = await _supabase
           .from('enrollments')
-          .select('student_id, progress, profiles!enrollments_student_id_fkey(*)')
+          .select(
+              'student_id, progress, profiles!enrollments_student_id_fkey(*)')
           .eq('course_id', courseId);
 
       return response.map<UserModel>((json) {
@@ -606,7 +632,8 @@ class SupabaseService {
 
   // ==================== Certificates ====================
 
-  Future<List<CertificateModel>> getCertificatesByProvider(String providerId) async {
+  Future<List<CertificateModel>> getCertificatesByProvider(
+      String providerId) async {
     try {
       final response = await _supabase
           .from('certificates')
@@ -622,7 +649,8 @@ class SupabaseService {
     }
   }
 
-  Future<List<CertificateModel>> getCertificatesByCourse(String courseId) async {
+  Future<List<CertificateModel>> getCertificatesByCourse(
+      String courseId) async {
     try {
       final response = await _supabase
           .from('certificates')
@@ -650,16 +678,20 @@ class SupabaseService {
     try {
       final certNumber = 'CERT-${DateTime.now().millisecondsSinceEpoch}';
 
-      final response = await _supabase.from('certificates').insert({
-        'certificate_number': certNumber,
-        'student_name': studentName,
-        'course_name': courseName,
-        'provider_name': providerName,
-        'score': score,
-        'student_id': studentId,
-        'course_id': courseId,
-        'provider_id': providerId,
-      }).select().single();
+      final response = await _supabase
+          .from('certificates')
+          .insert({
+            'certificate_number': certNumber,
+            'student_name': studentName,
+            'course_name': courseName,
+            'provider_name': providerName,
+            'score': score,
+            'student_id': studentId,
+            'course_id': courseId,
+            'provider_id': providerId,
+          })
+          .select()
+          .single();
 
       return CertificateModel.fromJson(response);
     } catch (e) {
@@ -669,7 +701,8 @@ class SupabaseService {
 
   // ==================== Certificate Templates ====================
 
-  Future<List<Map<String, dynamic>>> getCertificateTemplates(String providerId) async {
+  Future<List<Map<String, dynamic>>> getCertificateTemplates(
+      String providerId) async {
     try {
       final response = await _supabase
           .from('certificate_templates')
@@ -716,7 +749,9 @@ class SupabaseService {
     try {
       Map<String, dynamic> updates = {};
       if (name != null) updates['name'] = name;
-      if (backgroundColor != null) updates['background_color'] = backgroundColor;
+      if (backgroundColor != null) {
+        updates['background_color'] = backgroundColor;
+      }
       if (textColor != null) updates['text_color'] = textColor;
       if (logoUrl != null) updates['logo_url'] = logoUrl;
       if (signatureUrl != null) updates['signature_url'] = signatureUrl;
@@ -732,7 +767,10 @@ class SupabaseService {
 
   Future<void> deleteCertificateTemplate(String templateId) async {
     try {
-      await _supabase.from('certificate_templates').delete().eq('id', templateId);
+      await _supabase
+          .from('certificate_templates')
+          .delete()
+          .eq('id', templateId);
     } catch (e) {
       throw Exception('فشل في حذف قالب الشهادة');
     }
@@ -781,8 +819,7 @@ class SupabaseService {
     try {
       await _supabase
           .from('notifications')
-          .update({'is_read': true})
-          .eq('id', notificationId);
+          .update({'is_read': true}).eq('id', notificationId);
     } catch (e) {
       throw Exception('فشل في تحديث الإشعار');
     }
@@ -814,13 +851,17 @@ class SupabaseService {
   }) async {
     try {
       final userId = _supabase.auth.currentUser!.id;
-      final response = await _supabase.from('payments').insert({
-        'amount': amount,
-        'status': 'معلق',
-        'payment_method': paymentMethod,
-        'proof_url': proofUrl,
-        'provider_id': userId,
-      }).select().single();
+      final response = await _supabase
+          .from('payments')
+          .insert({
+            'amount': amount,
+            'status': 'PENDING',
+            'payment_method': paymentMethod,
+            'proof_url': proofUrl,
+            'provider_id': userId,
+          })
+          .select()
+          .single();
 
       return PaymentModel.fromJson(response);
     } catch (e) {
@@ -865,7 +906,8 @@ class SupabaseService {
       final enrollmentsResponse = await _supabase
           .from('enrollments')
           .select('course_id')
-          .inFilter('course_id', coursesResponse.map((c) => c['id'] as String).toList());
+          .inFilter('course_id',
+              coursesResponse.map((c) => c['id'] as String).toList());
 
       final certificatesResponse = await _supabase
           .from('certificates')
@@ -879,7 +921,7 @@ class SupabaseService {
 
       double totalRevenue = 0;
       for (final p in paymentsResponse) {
-        if (p['status'] == 'معتمد') {
+        if (p['status'] == 'APPROVED') {
           totalRevenue += (p['amount'] as num).toDouble();
         }
       }

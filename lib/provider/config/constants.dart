@@ -8,26 +8,46 @@ class AppConstants {
   static const String roleStudent = 'student';
   static const String roleAdmin = 'admin';
 
-  // Course levels
-  static const String levelBeginner = 'مبتدئ';
-  static const String levelIntermediate = 'متوسط';
-  static const String levelAdvanced = 'متقدم';
+  // Course levels (DB enum values)
+  static const String levelBeginner = 'BEGINNER';
+  static const String levelIntermediate = 'INTERMEDIATE';
+  static const String levelAdvanced = 'ADVANCED';
 
-  // Course statuses
-  static const String statusDraft = 'مسودة';
-  static const String statusPublished = 'منشور';
+  // Course level display names
+  static const String levelBeginnerText = 'مبتدئ';
+  static const String levelIntermediateText = 'متوسط';
+  static const String levelAdvancedText = 'متقدم';
 
-  // Lesson types
-  static const String lessonTypeVideo = 'فيديو';
+  // Course statuses (DB enum values)
+  static const String statusDraft = 'DRAFT';
+  static const String statusPublished = 'PUBLISHED';
+  static const String statusArchived = 'ARCHIVED';
+
+  // Lesson types (DB enum values)
+  static const String lessonTypeVideo = 'VIDEO';
   static const String lessonTypePdf = 'PDF';
-  static const String lessonTypeDocument = 'مستند';
-  static const String lessonTypeAudio = 'صوتي';
-  static const String lessonTypeImage = 'صورة';
+  static const String lessonTypeText = 'TEXT';
+  static const String lessonTypeDocument = 'FILE';
+  static const String lessonTypeAudio = 'AUDIO';
+  static const String lessonTypeImage = 'IMAGE';
 
-  // Question types
-  static const String questionTypeMultipleChoice = 'اختيار متعدد';
-  static const String questionTypeTrueFalse = 'صح/خطأ';
-  static const String questionTypeText = 'نصي';
+  // Lesson type display names
+  static const String lessonTypeVideoText = 'فيديو';
+  static const String lessonTypePdfText = 'PDF';
+  static const String lessonTypeTextText = 'نص';
+  static const String lessonTypeDocumentText = 'مستند';
+  static const String lessonTypeAudioText = 'صوتي';
+  static const String lessonTypeImageText = 'صورة';
+
+  // Question types (DB enum values)
+  static const String questionTypeMultipleChoice = 'MULTIPLE_CHOICE';
+  static const String questionTypeTrueFalse = 'TRUE_FALSE';
+  static const String questionTypeText = 'TEXT';
+
+  // Question type display names
+  static const String questionTypeMultipleChoiceText = 'اختيار متعدد';
+  static const String questionTypeTrueFalseText = 'صح/خطأ';
+  static const String questionTypeTextText = 'نصي';
 
   // Notification types
   static const String notifTypeSystem = 'نظام';
@@ -35,10 +55,11 @@ class AppConstants {
   static const String notifTypeCertificate = 'شهادة';
   static const String notifTypePayment = 'دفعة';
 
-  // Payment statuses
-  static const String paymentStatusPending = 'معلق';
-  static const String paymentStatusApproved = 'معتمد';
-  static const String paymentStatusRejected = 'مرفوض';
+  // Payment statuses (DB enum values)
+  static const String paymentStatusPending = 'PENDING';
+  static const String paymentStatusApproved = 'APPROVED';
+  static const String paymentStatusRejected = 'REJECTED';
+  static const String paymentStatusRefunded = 'REFUNDED';
 
   // Payment methods
   static const String paymentMethodBank = 'تحويل بنكي';
@@ -74,11 +95,18 @@ class AppConstants {
     'أخرى',
   ];
 
-  // Course levels list
+  // Course levels list (DB enum values)
   static const List<String> levels = [
     levelBeginner,
     levelIntermediate,
     levelAdvanced,
+  ];
+
+  // Course levels display names
+  static const List<String> levelsText = [
+    levelBeginnerText,
+    levelIntermediateText,
+    levelAdvancedText,
   ];
 
   // Pagination

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import '../../../config/app_theme.dart';
-import '../../../config/constants.dart';
 import '../../../models/module_model.dart';
-import '../../../providers/course_provider.dart';
 import '../../../services/supabase_service.dart';
 import '../../../widgets/custom_app_bar.dart';
 import '../../../widgets/lesson_item.dart';
@@ -40,7 +37,7 @@ class _CourseContentScreenState extends State<CourseContentScreen> {
 
     try {
       final modules = await SupabaseService.getModulesByCourse(widget.courseId);
-      final progress = await SupabaseService.getCourseProgress(widget.courseId);
+      await SupabaseService.getCourseProgress(widget.courseId);
 
       int totalLessons = 0;
       int completedLessons = 0;
@@ -51,7 +48,8 @@ class _CourseContentScreenState extends State<CourseContentScreen> {
 
       setState(() {
         _modules = modules;
-        _overallProgress = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
+        _overallProgress =
+            totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
         _isLoading = false;
       });
     } catch (e) {
@@ -74,7 +72,9 @@ class _CourseContentScreenState extends State<CourseContentScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(_error!, style: const TextStyle(fontFamily: 'Cairo', fontSize: 14)),
+                      Text(_error!,
+                          style: const TextStyle(
+                              fontFamily: 'Cairo', fontSize: 14)),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadContent,
@@ -98,7 +98,8 @@ class _CourseContentScreenState extends State<CourseContentScreen> {
                           subtitle: 'لم يتم إضافة محتوى لهذه الدورة بعد',
                         )
                       else
-                        ..._modules.map((module) => _buildModuleSection(module)),
+                        ..._modules
+                            .map((module) => _buildModuleSection(module)),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -178,7 +179,8 @@ class _CourseContentScreenState extends State<CourseContentScreen> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          childrenPadding: const EdgeInsets.only(bottom: 8, right: 16, left: 16),
+          childrenPadding:
+              const EdgeInsets.only(bottom: 8, right: 16, left: 16),
           leading: Container(
             width: 36,
             height: 36,
@@ -223,7 +225,9 @@ class _CourseContentScreenState extends State<CourseContentScreen> {
                 style: TextStyle(
                   fontFamily: 'Cairo',
                   fontSize: 12,
-                  color: module.progress >= 1.0 ? AppTheme.successGreen : AppTheme.primaryBlue,
+                  color: module.progress >= 1.0
+                      ? AppTheme.successGreen
+                      : AppTheme.primaryBlue,
                   fontWeight: FontWeight.w600,
                 ),
               ),

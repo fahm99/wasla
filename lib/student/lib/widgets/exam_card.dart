@@ -68,7 +68,7 @@ class ExamCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.schedule, size: 12, color: AppTheme.greyText),
+                      const Icon(Icons.schedule, size: 12, color: AppTheme.greyText),
                       const SizedBox(width: 3),
                       Text(
                         exam.formattedDuration,
@@ -79,7 +79,7 @@ class ExamCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Icon(Icons.quiz, size: 12, color: AppTheme.greyText),
+                      const Icon(Icons.quiz, size: 12, color: AppTheme.greyText),
                       const SizedBox(width: 3),
                       Text(
                         '${exam.totalQuestions} سؤال',

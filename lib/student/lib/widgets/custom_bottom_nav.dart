@@ -38,19 +38,19 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
         fontSize: 11,
       ),
       items: [
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.home_outlined),
-          activeIcon: const Icon(Icons.home),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home),
           label: 'الرئيسية',
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.search),
-          activeIcon: const Icon(Icons.search),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.search),
+          activeIcon: Icon(Icons.search),
           label: 'البحث',
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.menu_book_outlined),
-          activeIcon: const Icon(Icons.menu_book),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.menu_book_outlined),
+          activeIcon: Icon(Icons.menu_book),
           label: 'دوراتي',
         ),
         BottomNavigationBarItem(
@@ -70,9 +70,9 @@ class _CustomBottomNavState extends State<CustomBottomNav> {
           ),
           label: 'الإشعارات',
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.person_outline),
-          activeIcon: const Icon(Icons.person),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          activeIcon: Icon(Icons.person),
           label: 'حسابي',
         ),
       ],

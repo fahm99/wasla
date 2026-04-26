@@ -1,60 +1,85 @@
+import 'answer_model.dart';
+
+/// نموذج السؤال - يطابق جدول questions في قاعدة البيانات
+/// Question Model - matches the questions table in the database
 class QuestionModel {
   final String id;
-  final String examId;
-  final String questionText;
-  final String questionType;
-  final List<String>? options;
-  final String? correctAnswer;
+  final String text;
+  final String type;
   final int points;
   final int order;
-  final DateTime createdAt;
-
-  // Getters for compatibility
-  String get text => questionText;
-  String get type => questionType;
-  String? get imageUrl => null; // Add if you have image support
-  List<dynamic> get answers =>
-      options?.map((opt) => {'id': opt, 'text': opt}).toList() ?? [];
+  final String examId;
+  final String? explanation;
+  final String? imageUrl;
+  final List<AnswerModel> answers;
+  final DateTime? createdAt;
 
   QuestionModel({
     required this.id,
-    required this.examId,
-    required this.questionText,
-    required this.questionType,
-    this.options,
-    this.correctAnswer,
+    required this.text,
+    required this.type,
     required this.points,
     required this.order,
-    required this.createdAt,
+    required this.examId,
+    this.explanation,
+    this.imageUrl,
+    this.answers = const [],
+    this.createdAt,
   });
 
   factory QuestionModel.fromJson(Map<String, dynamic> json) {
     return QuestionModel(
-      id: json['id'] as String,
-      examId: json['exam_id'] as String,
-      questionText: json['question_text'] as String,
-      questionType: json['question_type'] as String,
-      options: json['options'] != null
-          ? List<String>.from(json['options'] as List)
+      id: json['id']?.toString() ?? '',
+      text: json['text']?.toString() ?? '',
+      type: json['type']?.toString() ?? 'MULTIPLE_CHOICE',
+      points: (json['points'] as int?) ?? 1,
+      order: (json['order'] as int?) ?? 0,
+      examId: json['exam_id']?.toString() ?? '',
+      explanation: json['explanation']?.toString(),
+      imageUrl: json['image_url']?.toString(),
+      answers: json['answers'] != null
+          ? (json['answers'] as List)
+              .map((a) =>
+                  AnswerModel.fromJson(Map<String, dynamic>.from(a as Map)))
+              .toList()
+          : [],
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString())
           : null,
-      correctAnswer: json['correct_answer'] as String?,
-      points: json['points'] as int,
-      order: json['order'] as int,
-      createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'exam_id': examId,
-      'question_text': questionText,
-      'question_type': questionType,
-      'options': options,
-      'correct_answer': correctAnswer,
+      'text': text,
+      'type': type,
       'points': points,
       'order': order,
-      'created_at': createdAt.toIso8601String(),
+      'exam_id': examId,
+      'explanation': explanation,
+      'image_url': imageUrl,
     };
+  }
+
+  QuestionModel copyWith({
+    String? text,
+    String? type,
+    int? points,
+    int? order,
+    List<AnswerModel>? answers,
+  }) {
+    return QuestionModel(
+      id: id,
+      text: text ?? this.text,
+      type: type ?? this.type,
+      points: points ?? this.points,
+      order: order ?? this.order,
+      examId: examId,
+      explanation: explanation,
+      imageUrl: imageUrl,
+      answers: answers ?? this.answers,
+      createdAt: createdAt,
+    );
   }
 }

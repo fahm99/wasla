@@ -31,8 +31,10 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
   List get _filteredCourses {
     final courses = context.watch<CourseProvider>().courses;
     if (_filter == 'all') return courses;
-    if (_filter == 'published') return courses.where((c) => c.status == 'منشور').toList();
-    return courses.where((c) => c.status == 'مسودة').toList();
+    if (_filter == 'published') {
+      return courses.where((c) => c.status == 'PUBLISHED').toList();
+    }
+    return courses.where((c) => c.status == 'DRAFT').toList();
   }
 
   @override
@@ -93,16 +95,20 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
               child: Consumer<CourseProvider>(
                 builder: (context, provider, child) {
                   if (provider.isLoading) {
-                    return const LoadingWidget(message: 'جاري تحميل الدورات...');
+                    return const LoadingWidget(
+                        message: 'جاري تحميل الدورات...');
                   }
                   if (provider.error != null) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.error_outline, size: 60, color: AppTheme.redDanger),
+                          const Icon(Icons.error_outline,
+                              size: 60, color: AppTheme.redDanger),
                           const SizedBox(height: 16),
-                          Text(provider.error!, style: const TextStyle(color: AppTheme.redDanger)),
+                          Text(provider.error!,
+                              style:
+                                  const TextStyle(color: AppTheme.redDanger)),
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: _loadCourses,
@@ -137,13 +143,19 @@ class _CoursesListScreenState extends State<CoursesListScreen> {
                           course: _filteredCourses[index],
                           onPublish: () {
                             final course = _filteredCourses[index];
-                            final publish = course.status != 'منشور';
-                            provider.publishCourse(course.id, publish).then((success) {
+                            final publish = course.status != 'PUBLISHED';
+                            provider
+                                .publishCourse(course.id, publish)
+                                .then((success) {
                               if (success) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(publish ? 'تم نشر الدورة' : 'تم إلغاء نشر الدورة'),
-                                    backgroundColor: publish ? AppTheme.greenSuccess : AppTheme.yellowAccent,
+                                    content: Text(publish
+                                        ? 'تم نشر الدورة'
+                                        : 'تم إلغاء نشر الدورة'),
+                                    backgroundColor: publish
+                                        ? AppTheme.greenSuccess
+                                        : AppTheme.yellowAccent,
                                   ),
                                 );
                               }

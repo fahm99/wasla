@@ -44,7 +44,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                         title: const Text('حذف الدورة'),
-                        content: const Text('هل أنت متأكد من حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء.'),
+                        content: const Text(
+                            'هل أنت متأكد من حذف هذه الدورة؟ لا يمكن التراجع عن هذا الإجراء.'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
@@ -61,13 +62,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       ),
                     );
                     if (confirm == true && mounted) {
-                      final success = await provider.deleteCourse(widget.courseId);
+                      final success =
+                          await provider.deleteCourse(widget.courseId);
                       if (mounted) {
                         if (success) {
                           context.go('/courses');
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(provider.error ?? 'فشل في الحذف')),
+                            SnackBar(
+                                content:
+                                    Text(provider.error ?? 'فشل في الحذف')),
                           );
                         }
                       }
@@ -103,9 +107,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 imageUrl: course.image!,
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) => const Center(
-                                  child: CircularProgressIndicator(color: AppTheme.primaryDarkBlue),
+                                  child: CircularProgressIndicator(
+                                      color: AppTheme.primaryDarkBlue),
                                 ),
-                                errorWidget: (context, url, error) => const Icon(
+                                errorWidget: (context, url, error) =>
+                                    const Icon(
                                   Icons.school,
                                   size: 80,
                                   color: AppTheme.primaryDarkBlue,
@@ -121,17 +127,20 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         top: 12,
                         right: 12,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: course.status == 'منشور'
+                            color: course.isPublished
                                 ? AppTheme.greenSuccess
                                 : AppTheme.yellowAccent,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            course.status,
+                            course.statusText,
                             style: TextStyle(
-                              color: course.status == 'منشور' ? Colors.white : AppTheme.primaryDarkBlue,
+                              color: course.isPublished
+                                  ? Colors.white
+                                  : AppTheme.primaryDarkBlue,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -156,12 +165,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            _buildInfoChip(Icons.category_outlined, course.category, AppTheme.blueInfo),
+                            _buildInfoChip(Icons.category_outlined,
+                                course.category, AppTheme.blueInfo),
                             const SizedBox(width: 8),
-                            _buildInfoChip(Icons.signal_cellular_alt, course.level, AppTheme.greenSuccess),
+                            _buildInfoChip(Icons.signal_cellular_alt,
+                                course.level, AppTheme.greenSuccess),
                             const SizedBox(width: 8),
                             if (course.price > 0)
-                              _buildInfoChip(Icons.attach_money, '${course.price.toStringAsFixed(0)} ر.س', AppTheme.primaryDarkBlue),
+                              _buildInfoChip(
+                                  Icons.attach_money,
+                                  '${course.price.toStringAsFixed(0)} ر.س',
+                                  AppTheme.primaryDarkBlue),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -189,10 +203,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: _buildStatItem(Icons.people_outline, '${course.studentsCount ?? 0}', 'طالب'),
+                              child: _buildStatItem(Icons.people_outline,
+                                  '${course.studentsCount ?? 0}', 'طالب'),
                             ),
                             Expanded(
-                              child: _buildStatItem(Icons.folder_outlined, '${course.modulesCount ?? 0}', 'وحدة'),
+                              child: _buildStatItem(Icons.folder_outlined,
+                                  '${course.modulesCount ?? 0}', 'وحدة'),
                             ),
                           ],
                         ),
@@ -203,15 +219,18 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             Expanded(
                               child: OutlinedButton.icon(
                                 onPressed: () async {
-                                  await context.push('/courses/${course.id}/edit');
+                                  await context
+                                      .push('/courses/${course.id}/edit');
                                   provider.loadCourseById(course.id);
                                 },
                                 icon: const Icon(Icons.edit),
                                 label: const Text('تعديل'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppTheme.primaryDarkBlue,
-                                  side: const BorderSide(color: AppTheme.primaryDarkBlue),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  side: const BorderSide(
+                                      color: AppTheme.primaryDarkBlue),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -222,14 +241,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: () {
-                                  provider.publishCourse(course.id, course.status != 'منشور');
+                                  provider.publishCourse(
+                                      course.id, !course.isPublished);
                                 },
-                                icon: Icon(course.status == 'منشور' ? Icons.unpublished : Icons.publish),
-                                label: Text(course.status == 'منشور' ? 'إلغاء النشر' : 'نشر الدورة'),
+                                icon: Icon(course.isPublished
+                                    ? Icons.unpublished
+                                    : Icons.publish),
+                                label: Text(course.isPublished
+                                    ? 'إلغاء النشر'
+                                    : 'نشر الدورة'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: course.status == 'منشور' ? AppTheme.redDanger : AppTheme.greenSuccess,
+                                  backgroundColor: course.isPublished
+                                      ? AppTheme.redDanger
+                                      : AppTheme.greenSuccess,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -245,7 +272,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           icon: Icons.view_module_outlined,
                           title: 'إدارة الوحدات والدروس',
                           subtitle: 'إضافة وتعديل وترتيب المحتوى',
-                          onTap: () => context.push('/courses/${course.id}/modules'),
+                          onTap: () =>
+                              context.push('/courses/${course.id}/modules'),
                         ),
                         const SizedBox(height: 8),
                         _buildManagementItem(
@@ -253,7 +281,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           icon: Icons.quiz_outlined,
                           title: 'إدارة الامتحانات',
                           subtitle: 'إنشاء وإدارة الامتحانات والأسئلة',
-                          onTap: () => context.push('/courses/${course.id}/exams'),
+                          onTap: () =>
+                              context.push('/courses/${course.id}/exams'),
                         ),
                         const SizedBox(height: 8),
                         _buildManagementItem(
@@ -261,7 +290,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           icon: Icons.people_outline,
                           title: 'قائمة الطلاب',
                           subtitle: 'عرض الطلاب المسجلين',
-                          onTap: () => context.push('/courses/${course.id}/students'),
+                          onTap: () =>
+                              context.push('/courses/${course.id}/students'),
                         ),
                         const SizedBox(height: 8),
                         _buildManagementItem(
@@ -269,7 +299,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           icon: Icons.workspace_premium_outlined,
                           title: 'الشهادات',
                           subtitle: 'عرض وإصدار الشهادات',
-                          onTap: () => context.push('/courses/${course.id}/certificates'),
+                          onTap: () => context
+                              .push('/courses/${course.id}/certificates'),
                         ),
                       ],
                     ),
@@ -319,9 +350,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         children: [
           Icon(icon, color: AppTheme.primaryDarkBlue, size: 28),
           const SizedBox(height: 8),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primaryDarkBlue)),
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryDarkBlue)),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 12, color: AppTheme.darkGrayText)),
+          Text(label,
+              style:
+                  const TextStyle(fontSize: 12, color: AppTheme.darkGrayText)),
         ],
       ),
     );
@@ -359,13 +396,20 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppTheme.primaryDarkBlue)),
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryDarkBlue)),
                   const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(fontSize: 12, color: AppTheme.darkGrayText)),
+                  Text(subtitle,
+                      style: const TextStyle(
+                          fontSize: 12, color: AppTheme.darkGrayText)),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_back_ios_new, size: 16, color: AppTheme.darkGrayText),
+            const Icon(Icons.arrow_back_ios_new,
+                size: 16, color: AppTheme.darkGrayText),
           ],
         ),
       ),

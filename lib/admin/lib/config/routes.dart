@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../views/screens/splash_screen.dart';
 import '../views/screens/auth/login_screen.dart';
 import '../views/screens/dashboard/dashboard_screen.dart';
 import '../views/screens/accounts/accounts_screen.dart';
@@ -17,7 +16,6 @@ import '../views/screens/profile/settings_screen.dart';
 import '../views/screens/profile/change_password_screen.dart';
 
 class AppRoutes {
-  static const String splash = '/';
   static const String login = '/login';
   static const String dashboard = '/dashboard';
   static const String accounts = '/accounts';
@@ -34,18 +32,14 @@ class AppRoutes {
   static const String changePassword = '/change-password';
 
   static final _rootNavigatorKey = GlobalKey<NavigatorState>();
-  static final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: splash,
+    initialLocation: login,
     debugLogDiagnostics: true,
     redirect: (context, state) {
       final isLoggedIn = _authService.isLoggedIn;
       final isLoginRoute = state.matchedLocation == login;
-      final isSplashRoute = state.matchedLocation == splash;
-
-      if (isSplashRoute) return null;
 
       if (!isLoggedIn && !isLoginRoute) return login;
       if (isLoggedIn && isLoginRoute) return dashboard;
@@ -53,10 +47,6 @@ class AppRoutes {
       return null;
     },
     routes: [
-      GoRoute(
-        path: splash,
-        builder: (context, state) => const SplashScreen(),
-      ),
       GoRoute(
         path: login,
         builder: (context, state) => const LoginScreen(),

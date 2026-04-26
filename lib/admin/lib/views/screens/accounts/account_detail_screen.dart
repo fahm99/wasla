@@ -109,7 +109,7 @@ class _AccountDetailScreenState extends State<AccountDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.lightGrayBg,
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         title: 'تفاصيل الحساب',
         showBack: true,
         backgroundColor: AppTheme.primaryDarkBlue,

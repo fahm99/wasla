@@ -10,7 +10,7 @@ class ExamController {
     required String description,
     required int passingScore,
     required String courseId,
-    String? duration,
+    int? duration,
   }) {
     if (title.trim().isEmpty) {
       _provider.setError('عنوان الامتحان مطلوب');
@@ -26,7 +26,7 @@ class ExamController {
           description: description,
           passingScore: passingScore,
           courseId: courseId,
-          duration: duration,
+          duration: duration ?? 30,
         )
         .then((v) => v != null);
   }

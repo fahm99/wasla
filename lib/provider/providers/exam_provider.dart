@@ -36,7 +36,8 @@ class ExamProvider with ChangeNotifier {
     required String description,
     required int passingScore,
     required String courseId,
-    String? duration,
+    int duration = 30,
+    int maxAttempts = 3,
   }) async {
     _isLoading = true;
     _error = null;
@@ -49,6 +50,7 @@ class ExamProvider with ChangeNotifier {
         passingScore: passingScore,
         courseId: courseId,
         duration: duration,
+        maxAttempts: maxAttempts,
       );
       _exams.insert(0, exam);
       _isLoading = false;
@@ -67,7 +69,8 @@ class ExamProvider with ChangeNotifier {
     String? title,
     String? description,
     int? passingScore,
-    String? duration,
+    int? duration,
+    int? maxAttempts,
   }) async {
     _isLoading = true;
     _error = null;
@@ -80,6 +83,7 @@ class ExamProvider with ChangeNotifier {
         description: description,
         passingScore: passingScore,
         duration: duration,
+        maxAttempts: maxAttempts,
       );
 
       final index = _exams.indexWhere((e) => e.id == examId);

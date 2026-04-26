@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../config/supabase_config.dart';
 import '../models/user_model.dart';
 import '../models/course_model.dart';
@@ -162,7 +162,7 @@ class SupabaseService {
       query = query.eq('status', status);
     }
     if (search != null && search.isNotEmpty) {
-      query = query.or('full_name.ilike.%$search%,email.ilike.%$search%');
+      query = query.or('name.ilike.%$search%,email.ilike.%$search%');
     }
 
     final response = await query;
@@ -206,7 +206,7 @@ class SupabaseService {
   }) async {
     dynamic query = _client
         .from(SupabaseConfig.coursesTable)
-        .select('*, profiles!courses_provider_id_fkey(full_name, avatar_url)')
+        .select('*, profiles!courses_provider_id_fkey(name, avatar)')
         .order('created_at', ascending: false);
 
     if (status != null && status.isNotEmpty) {
@@ -221,8 +221,8 @@ class SupabaseService {
       final courseMap = Map<String, dynamic>.from(e);
       final profile = courseMap.remove('profiles');
       if (profile != null && profile is Map) {
-        courseMap['provider_name'] = profile['full_name'];
-        courseMap['provider_avatar'] = profile['avatar_url'];
+        courseMap['provider_name'] = profile['name'];
+        courseMap['provider_avatar'] = profile['avatar'];
       }
       return CourseModel.fromJson(courseMap);
     }).toList();
@@ -231,15 +231,15 @@ class SupabaseService {
   Future<CourseModel> getCourseById(String id) async {
     final response = await _client
         .from(SupabaseConfig.coursesTable)
-        .select('*, profiles!courses_provider_id_fkey(full_name, avatar_url)')
+        .select('*, profiles!courses_provider_id_fkey(name, avatar)')
         .eq('id', id)
         .single();
 
     final courseMap = Map<String, dynamic>.from(response);
     final profile = courseMap.remove('profiles');
     if (profile != null && profile is Map) {
-      courseMap['provider_name'] = profile['full_name'];
-      courseMap['provider_avatar'] = profile['avatar_url'];
+      courseMap['provider_name'] = profile['name'];
+      courseMap['provider_avatar'] = profile['avatar'];
     }
     return CourseModel.fromJson(courseMap);
   }
@@ -271,8 +271,7 @@ class SupabaseService {
   }) async {
     dynamic query = _client
         .from(SupabaseConfig.paymentsTable)
-        .select(
-            '*, profiles!payments_user_id_fkey(full_name, avatar_url), courses(title)')
+        .select('*, profiles!payments_provider_id_fkey(name, avatar)')
         .order('created_at', ascending: false);
 
     if (status != null && status.isNotEmpty) {
@@ -286,13 +285,9 @@ class SupabaseService {
     return response.map((e) {
       final paymentMap = Map<String, dynamic>.from(e);
       final profile = paymentMap.remove('profiles');
-      final course = paymentMap.remove('courses');
       if (profile != null && profile is Map) {
-        paymentMap['user_name'] = profile['full_name'];
-        paymentMap['user_avatar'] = profile['avatar_url'];
-      }
-      if (course != null && course is Map) {
-        paymentMap['course_title'] = course['title'];
+        paymentMap['provider_name'] = profile['name'];
+        paymentMap['provider_avatar'] = profile['avatar'];
       }
       return PaymentModel.fromJson(paymentMap);
     }).toList();
@@ -301,20 +296,15 @@ class SupabaseService {
   Future<PaymentModel> getPaymentById(String id) async {
     final response = await _client
         .from(SupabaseConfig.paymentsTable)
-        .select(
-            '*, profiles!payments_user_id_fkey(full_name, avatar_url), courses(title)')
+        .select('*, profiles!payments_provider_id_fkey(name, avatar)')
         .eq('id', id)
         .single();
 
     final paymentMap = Map<String, dynamic>.from(response);
     final profile = paymentMap.remove('profiles');
-    final course = paymentMap.remove('courses');
     if (profile != null && profile is Map) {
-      paymentMap['user_name'] = profile['full_name'];
-      paymentMap['user_avatar'] = profile['avatar_url'];
-    }
-    if (course != null && course is Map) {
-      paymentMap['course_title'] = course['title'];
+      paymentMap['provider_name'] = profile['name'];
+      paymentMap['provider_avatar'] = profile['avatar'];
     }
     return PaymentModel.fromJson(paymentMap);
   }
@@ -368,7 +358,7 @@ class SupabaseService {
 
     final data = {
       'title': title,
-      'body': message,
+      'message': message,
       'sender_id': user?.id,
       'sent_to_all': targetType == 'ALL' ? true : false,
       'target_roles': targetType == 'ALL' ? null : targetRoles,

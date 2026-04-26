@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as p;
 
 import '../providers/auth_provider.dart';
-import '../views/screens/splash_screen.dart';
 import '../views/screens/auth/login_screen.dart';
 import '../views/screens/auth/register_screen.dart';
 import '../views/screens/home/home_screen.dart';
@@ -14,7 +13,6 @@ import '../views/screens/course/course_content_screen.dart';
 import '../views/screens/course/lesson_viewer_screen.dart';
 import '../views/screens/enrollment/enroll_screen.dart';
 import '../views/screens/enrollment/my_courses_screen.dart';
-import '../views/screens/exam/exam_list_screen.dart';
 import '../views/screens/exam/exam_take_screen.dart';
 import '../views/screens/exam/exam_result_screen.dart';
 import '../views/screens/certificate/certificates_screen.dart';
@@ -26,7 +24,7 @@ import '../views/screens/notification/notifications_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/login',
     redirect: (context, state) {
       final authProvider = p.Provider.of<AuthProvider>(context, listen: false);
       final isLoggingIn = state.matchedLocation == '/login' ||
@@ -40,10 +38,6 @@ class AppRouter {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const SplashScreen(),
-      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),

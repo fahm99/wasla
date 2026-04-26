@@ -93,7 +93,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.lightGrayBg,
-      appBar: CustomAppBar(
+      appBar: const CustomAppBar(
         title: 'تفاصيل الكورس',
         showBack: true,
         backgroundColor: AppTheme.primaryDarkBlue,

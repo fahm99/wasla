@@ -1,6 +1,9 @@
+
+import 'package:wasla_provider/shared/config/env_config.dart';
+
 class SupabaseConfig {
-  static const String supabaseUrl = 'YOUR_SUPABASE_URL';
-  static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+  static String get supabaseUrl => EnvConfig.supabaseUrl;
+  static String get supabaseAnonKey => EnvConfig.supabaseAnonKey;
 
   static const String profilesTable = 'profiles';
   static const String coursesTable = 'courses';

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
@@ -289,10 +288,10 @@ class _LessonViewerScreenState extends State<LessonViewerScreen> {
   Widget _buildPdfContent() {
     final fileUrl = _lesson?['file_url'];
     if (fileUrl == null) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.picture_as_pdf, size: 64, color: AppTheme.greyText),
             SizedBox(height: 16),
             Text('لا يوجد ملف PDF',
@@ -475,8 +474,9 @@ class _LessonViewerScreenState extends State<LessonViewerScreen> {
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 }

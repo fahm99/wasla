@@ -10,7 +10,6 @@ import '../../../widgets/banner_slider.dart';
 import '../../../widgets/course_card.dart';
 import '../../../widgets/custom_bottom_nav.dart';
 import '../../../widgets/loading_widget.dart';
-import '../../../widgets/filter_chip.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

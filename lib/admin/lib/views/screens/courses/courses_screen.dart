@@ -151,7 +151,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppTheme.lightGrayBg,
-        appBar: CustomAppBar(
+        appBar: const CustomAppBar(
           title: Constants.titleCourses,
           showBack: false,
           backgroundColor: AppTheme.primaryDarkBlue,

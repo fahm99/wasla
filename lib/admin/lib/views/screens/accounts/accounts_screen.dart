@@ -201,7 +201,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppTheme.lightGrayBg,
-        appBar: CustomAppBar(
+        appBar: const CustomAppBar(
           title: Constants.titleAccounts,
           showBack: false,
           backgroundColor: AppTheme.primaryDarkBlue,
