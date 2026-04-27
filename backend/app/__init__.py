@@ -53,11 +53,11 @@ def create_app(config_name=None):
         }, 401
     
     # Register blueprints
-    from app.api.auth import auth_bp
-    from app.api.courses import courses_bp
+    from app.api.routes import api as api_bp
     
     app.register_blueprint(auth_bp)
     app.register_blueprint(courses_bp)
+    app.register_blueprint(api_bp)
     
     # Register error handlers
     from app.utils.errors import register_error_handlers
