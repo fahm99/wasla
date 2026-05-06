@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/course_model.dart';
-import '../services/supabase_service.dart';
+import 'package:wasla_provider/shared/services/flask_api_service.dart';
 
 class CoursesProvider with ChangeNotifier {
-  final SupabaseService _supabaseService;
+  final FlaskApiService _apiService;
 
-  CoursesProvider(this._supabaseService);
+  CoursesProvider(this._apiService);
 
   List<CourseModel> _courses = [];
   List<CourseModel> _filteredCourses = [];
@@ -29,7 +29,7 @@ class CoursesProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _courses = await _supabaseService.getAllCourses(
+      _courses = await _apiService.getAllCourses(
         status: _currentFilter.isEmpty ? null : _currentFilter,
       );
       _applyFilter();
@@ -70,7 +70,7 @@ class CoursesProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _selectedCourse = await _supabaseService.getCourseById(id);
+      _selectedCourse = await _apiService.getCourseById(id);
       notifyListeners();
       return _selectedCourse!;
     } catch (e) {
@@ -88,7 +88,7 @@ class CoursesProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final updated = await _supabaseService.updateCourseStatus(id, status);
+      final updated = await _apiService.updateCourseStatus(id, status);
 
       final index = _courses.indexWhere((c) => c.id == id);
       if (index != -1) {

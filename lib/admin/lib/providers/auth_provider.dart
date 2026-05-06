@@ -1,26 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
-import 'package:wasla_provider/shared/services/unified_auth_service.dart';
-import 'package:wasla_provider/shared/utils/auth_error_handler.dart'
-    hide AuthException;
+import 'package:wasla_provider/shared/services/api_client.dart';
+import 'package:wasla_provider/shared/services/auth_service.dart';
 import '../models/user_model.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
 class AuthProvider with ChangeNotifier {
-  final UnifiedAuthService _authService;
+  final AuthService _authService;
   AuthStatus _status = AuthStatus.unknown;
   UserModel? _user;
   String? _errorMessage;
-  late final StreamSubscription<AuthState> _authSubscription;
 
-  AuthProvider(SupabaseClient supabaseClient)
-      : _authService = UnifiedAuthService(supabaseClient) {
-    _authSubscription = _authService.authStateChanges.listen((_) {
-      checkAuth();
-    });
+  AuthProvider() : _authService = AuthService() {
     checkAuth();
   }
 
@@ -30,18 +23,11 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.unknown;
 
-  @override
-  void dispose() {
-    _authSubscription.cancel();
-    super.dispose();
-  }
-
   Future<void> checkAuth() async {
     try {
-      final result = await _authService.getCurrentUser(requiredRole: AuthRoles.admin);
+      final result = await _authService.getCurrentUser();
       if (result != null) {
-        final profile = result['profile'];
-        _user = UserModel.fromJson(profile);
+        _user = result;
         _status = AuthStatus.authenticated;
       } else {
         _user = null;
@@ -60,19 +46,20 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _authService.signIn(
-        email: email,
-        password: password,
-        requiredRole: AuthRoles.admin,
-      );
-
-      final profile = result['profile'];
-      _user = UserModel.fromJson(profile);
-      _status = AuthStatus.authenticated;
+      final result = await _authService.signIn(email, password, requiredRole: 'ADMIN');
+      if (result != null) {
+        _user = result;
+        _status = AuthStatus.authenticated;
+        notifyListeners();
+        return true;
+      }
+      _errorMessage = 'بيانات الاعتماد غير صحيحة';
+      _user = null;
+      _status = AuthStatus.unauthenticated;
       notifyListeners();
-      return true;
+      return false;
     } catch (e) {
-      _errorMessage = AuthErrorHandler.parse(e).message;
+      _errorMessage = e.toString();
       _user = null;
       _status = AuthStatus.unauthenticated;
       notifyListeners();
@@ -87,17 +74,17 @@ class AuthProvider with ChangeNotifier {
       _status = AuthStatus.unauthenticated;
       notifyListeners();
     } catch (e) {
-      _errorMessage = AuthErrorHandler.parse(e).message;
+      _errorMessage = e.toString();
       notifyListeners();
     }
   }
 
-  Future<bool> updatePassword(String newPassword) async {
+  Future<bool> updatePassword(String oldPassword, String newPassword) async {
     try {
-      await _authService.updatePassword(newPassword);
+      await _authService.updatePassword(oldPassword, newPassword);
       return true;
     } catch (e) {
-      _errorMessage = AuthErrorHandler.parse(e).message;
+      _errorMessage = e.toString();
       notifyListeners();
       return false;
     }

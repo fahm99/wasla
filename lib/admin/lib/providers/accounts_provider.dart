@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
-import '../services/supabase_service.dart';
+import 'package:wasla_provider/shared/services/flask_api_service.dart';
 
 class AccountsProvider with ChangeNotifier {
-  final SupabaseService _supabaseService;
+  final FlaskApiService _apiService;
 
-  AccountsProvider(this._supabaseService);
+  AccountsProvider(this._apiService);
 
   List<UserModel> _accounts = [];
   List<UserModel> _filteredAccounts = [];
@@ -32,7 +32,7 @@ class AccountsProvider with ChangeNotifier {
       final role = _currentFilter == 'PENDING' ? null : 'PROVIDER';
       final status = _currentFilter == 'PENDING' ? 'PENDING' : _currentFilter;
 
-      _accounts = await _supabaseService.getAllAccounts(
+      _accounts = await _apiService.getAllAccounts(
         role: role,
         status: status,
       );
@@ -75,7 +75,7 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _selectedAccount = await _supabaseService.getAccountById(id);
+      _selectedAccount = await _apiService.getAccountById(id);
       notifyListeners();
       return _selectedAccount!;
     } catch (e) {
@@ -93,7 +93,7 @@ class AccountsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final updated = await _supabaseService.updateAccountStatus(id, status);
+      final updated = await _apiService.updateAccountStatus(id, status);
 
       final index = _accounts.indexWhere((a) => a.id == id);
       if (index != -1) {

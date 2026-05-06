@@ -3,11 +3,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// تكوين متغيرات البيئة
 /// Environment Configuration
 class EnvConfig {
-  /// رابط Supabase
-  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+  /// رابط API الجديد (Flask Backend)
+  static String get apiUrl => dotenv.env['API_URL'] ?? 'http://localhost:5000';
 
-  /// مفتاح Supabase Anon
-  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  /// مفتاح API للتوثيق
+  static String get apiKey => dotenv.env['API_KEY'] ?? '';
 
   /// اسم التطبيق
   static String get appName => dotenv.env['APP_NAME'] ?? 'Wasla';
@@ -39,15 +39,9 @@ class EnvConfig {
 
   /// التحقق من صحة التكوين
   static bool validate() {
-    if (supabaseUrl.isEmpty) {
-      print('❌ خطأ: SUPABASE_URL غير موجود في .env');
-      print('❌ Error: SUPABASE_URL not found in .env');
-      return false;
-    }
-
-    if (supabaseAnonKey.isEmpty) {
-      print('❌ خطأ: SUPABASE_ANON_KEY غير موجود في .env');
-      print('❌ Error: SUPABASE_ANON_KEY not found in .env');
+    if (apiUrl.isEmpty) {
+      print('❌ خطأ: API_URL غير موجود في .env');
+      print('❌ Error: API_URL not found in .env');
       return false;
     }
 

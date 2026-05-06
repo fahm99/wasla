@@ -2,12 +2,12 @@ import 'package:flutter/foundation.dart';
 import '../models/stats_model.dart';
 import '../models/monthly_stats_model.dart';
 import '../models/user_model.dart';
-import '../services/supabase_service.dart';
+import 'package:wasla_provider/shared/services/flask_api_service.dart';
 
 class DashboardProvider with ChangeNotifier {
-  final SupabaseService _supabaseService;
+  final FlaskApiService _apiService;
 
-  DashboardProvider(this._supabaseService);
+  DashboardProvider(this._apiService);
 
   StatsModel _stats = StatsModel.empty();
   List<MonthlyStatsModel> _monthlyStats = [];
@@ -46,7 +46,7 @@ class DashboardProvider with ChangeNotifier {
 
   Future<void> loadStats() async {
     try {
-      _stats = await _supabaseService.getStats();
+      _stats = await _apiService.getStats();
       notifyListeners();
     } catch (e) {
       _errorMessage = 'حدث خطأ في تحميل الإحصائيات';
@@ -58,7 +58,7 @@ class DashboardProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _monthlyStats = await _supabaseService.getMonthlyStats();
+      _monthlyStats = await _apiService.getMonthlyStats();
       notifyListeners();
     } catch (e) {
       _monthlyStats = [];
@@ -73,7 +73,7 @@ class DashboardProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _pendingAccounts = await _supabaseService.getPendingAccounts();
+      _pendingAccounts = await _apiService.getPendingAccounts();
       notifyListeners();
     } catch (e) {
       _pendingAccounts = [];

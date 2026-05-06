@@ -1,11 +1,10 @@
 import 'dart:typed_data';
 import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:wasla_provider/shared/config/env_config.dart';
 
 class StorageService {
-  final SupabaseClient _client;
-
-  StorageService(this._client);
+  StorageService();
 
   Future<String?> uploadFile({
     required String bucket,
@@ -15,8 +14,7 @@ class StorageService {
     try {
       final file = File(filePath);
       final bytes = await file.readAsBytes();
-      await _client.storage.from(bucket).uploadBinary(path, bytes);
-      return _client.storage.from(bucket).getPublicUrl(path);
+      return _uploadBytes(bucket: bucket, path: path, bytes: bytes);
     } catch (e) {
       return null;
     }
@@ -27,9 +25,28 @@ class StorageService {
     required String path,
     required Uint8List bytes,
   }) async {
+    return _uploadBytes(bucket: bucket, path: path, bytes: bytes);
+  }
+
+  Future<String?> _uploadBytes({
+    required String bucket,
+    required String path,
+    required Uint8List bytes,
+  }) async {
     try {
-      await _client.storage.from(bucket).uploadBinary(path, bytes);
-      return _client.storage.from(bucket).getPublicUrl(path);
+      final uri = Uri.parse('${EnvConfig.apiUrl}/api/storage/$bucket/$path');
+      final request = http.Request('POST', uri);
+      request.headers['Content-Type'] = 'application/octet-stream';
+      request.bodyBytes = bytes;
+
+      final response = await http.Response.fromStream(
+        await request.send(),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return '${EnvConfig.apiUrl}/storage/$bucket/$path';
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -40,14 +57,7 @@ class StorageService {
     required String path,
     required String filePath,
   }) async {
-    try {
-      final file = File(filePath);
-      final bytes = await file.readAsBytes();
-      await _client.storage.from(bucket).updateBinary(path, bytes);
-      return _client.storage.from(bucket).getPublicUrl(path);
-    } catch (e) {
-      return null;
-    }
+    return uploadFile(bucket: bucket, path: path, filePath: filePath);
   }
 
   Future<String?> updateBytes({
@@ -55,12 +65,7 @@ class StorageService {
     required String path,
     required Uint8List bytes,
   }) async {
-    try {
-      await _client.storage.from(bucket).updateBinary(path, bytes);
-      return _client.storage.from(bucket).getPublicUrl(path);
-    } catch (e) {
-      return null;
-    }
+    return uploadBytes(bucket: bucket, path: path, bytes: bytes);
   }
 
   Future<bool> deleteFile({
@@ -68,8 +73,9 @@ class StorageService {
     required String path,
   }) async {
     try {
-      await _client.storage.from(bucket).remove([path]);
-      return true;
+      final uri = Uri.parse('${EnvConfig.apiUrl}/api/storage/$bucket/$path');
+      final response = await http.delete(uri);
+      return response.statusCode == 200;
     } catch (e) {
       return false;
     }
@@ -79,7 +85,7 @@ class StorageService {
     required String bucket,
     required String path,
   }) {
-    return _client.storage.from(bucket).getPublicUrl(path);
+    return '${EnvConfig.apiUrl}/storage/$bucket/$path';
   }
 
   Future<List<String>> listFiles({
@@ -87,8 +93,19 @@ class StorageService {
     String? path,
   }) async {
     try {
-      final files = await _client.storage.from(bucket).list(path: path);
-      return files.map((f) => f.name).toList();
+      final queryParams = <String, String>{'bucket': bucket};
+      if (path != null) queryParams['path'] = path;
+
+      final uri = Uri.parse('${EnvConfig.apiUrl}/api/storage/list')
+          .replace(queryParameters: queryParams);
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> files =
+            response.body.isNotEmpty ? response.body as List<dynamic> : [];
+        return files.map((f) => f.toString()).toList();
+      }
+      return [];
     } catch (e) {
       return [];
     }

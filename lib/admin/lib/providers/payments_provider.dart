@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/payment_model.dart';
-import '../services/supabase_service.dart';
+import 'package:wasla_provider/shared/services/flask_api_service.dart';
 
 class PaymentsProvider with ChangeNotifier {
-  final SupabaseService _supabaseService;
+  final FlaskApiService _apiService;
 
-  PaymentsProvider(this._supabaseService);
+  PaymentsProvider(this._apiService);
 
   List<PaymentModel> _payments = [];
   List<PaymentModel> _filteredPayments = [];
@@ -29,7 +29,7 @@ class PaymentsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _payments = await _supabaseService.getAllPayments(
+      _payments = await _apiService.getAllPayments(
         status: _currentFilter.isEmpty ? null : _currentFilter,
       );
       _applyFilter();
@@ -75,7 +75,7 @@ class PaymentsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _selectedPayment = await _supabaseService.getPaymentById(id);
+      _selectedPayment = await _apiService.getPaymentById(id);
       notifyListeners();
       return _selectedPayment!;
     } catch (e) {
@@ -93,7 +93,7 @@ class PaymentsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final updated = await _supabaseService.approvePayment(id);
+      final updated = await _apiService.approvePayment(id);
 
       final index = _payments.indexWhere((p) => p.id == id);
       if (index != -1) {
@@ -129,7 +129,7 @@ class PaymentsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final updated = await _supabaseService.rejectPayment(id, reason);
+      final updated = await _apiService.rejectPayment(id, reason);
 
       final index = _payments.indexWhere((p) => p.id == id);
       if (index != -1) {

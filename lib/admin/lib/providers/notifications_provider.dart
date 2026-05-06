@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../models/notification_model.dart';
-import '../services/supabase_service.dart';
+import 'package:wasla_provider/shared/services/flask_api_service.dart';
 
 class NotificationsProvider with ChangeNotifier {
-  final SupabaseService _supabaseService;
+  final FlaskApiService _apiService;
 
-  NotificationsProvider(this._supabaseService);
+  NotificationsProvider(this._apiService);
 
   List<NotificationModel> _notifications = [];
   bool _isLoading = false;
@@ -25,7 +25,7 @@ class NotificationsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      _notifications = await _supabaseService.getAllNotifications();
+      _notifications = await _apiService.getAllNotifications();
       _unreadCount = _notifications.length;
     } catch (e) {
       _errorMessage = 'حدث خطأ في تحميل الإشعارات';
@@ -47,7 +47,7 @@ class NotificationsProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final notification = await _supabaseService.sendNotification(
+      final notification = await _apiService.sendNotification(
         title: title,
         message: message,
         targetType: targetType,

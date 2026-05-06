@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wasla_provider/shared/config/env_config.dart';
+import 'package:wasla_provider/shared/services/api_client.dart';
+import 'package:wasla_provider/shared/services/flask_api_service.dart';
+import 'package:wasla_provider/shared/services/auth_service.dart';
 import 'dart:ui';
 
 import 'config/app_theme.dart';
-import 'config/supabase_config.dart';
 import 'providers/auth_provider.dart';
 import 'providers/dashboard_provider.dart';
 import 'providers/accounts_provider.dart';
 import 'providers/courses_provider.dart';
 import 'providers/payments_provider.dart';
 import 'providers/notifications_provider.dart';
-import 'services/supabase_service.dart';
 import 'services/storage_service.dart';
 import 'views/screens/auth/login_screen.dart';
 import 'views/screens/dashboard/dashboard_screen.dart';
@@ -79,11 +79,7 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  await Supabase.initialize(
-    url: SupabaseConfig.supabaseUrl,
-    anonKey: SupabaseConfig.supabaseAnonKey,
-  );
-
+  // لا حاجة لـ Supabase.initialize - نستخدم REST API
   runApp(const WaslaAdminApp());
 }
 
@@ -92,31 +88,32 @@ class WaslaAdminApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final supabaseClient = Supabase.instance.client;
-    final supabaseService = SupabaseService(supabaseClient);
-    final storageService = StorageService(supabaseClient);
+    final flaskApiService = FlaskApiService();
+    final authService = AuthService();
+    final storageService = StorageService();
 
     return MultiProvider(
       providers: [
-        Provider<SupabaseService>.value(value: supabaseService),
+        Provider<FlaskApiService>.value(value: flaskApiService),
+        Provider<AuthService>.value(value: authService),
         Provider<StorageService>.value(value: storageService),
         ChangeNotifierProvider<AuthProvider>(
-          create: (_) => AuthProvider(supabaseClient),
+          create: (_) => AuthProvider(),
         ),
         ChangeNotifierProvider<DashboardProvider>(
-          create: (_) => DashboardProvider(supabaseService),
+          create: (_) => DashboardProvider(flaskApiService),
         ),
         ChangeNotifierProvider<AccountsProvider>(
-          create: (_) => AccountsProvider(supabaseService),
+          create: (_) => AccountsProvider(flaskApiService),
         ),
         ChangeNotifierProvider<CoursesProvider>(
-          create: (_) => CoursesProvider(supabaseService),
+          create: (_) => CoursesProvider(flaskApiService),
         ),
         ChangeNotifierProvider<PaymentsProvider>(
-          create: (_) => PaymentsProvider(supabaseService),
+          create: (_) => PaymentsProvider(flaskApiService),
         ),
         ChangeNotifierProvider<NotificationsProvider>(
-          create: (_) => NotificationsProvider(supabaseService),
+          create: (_) => NotificationsProvider(flaskApiService),
         ),
       ],
       child: Builder(
